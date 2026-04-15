@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSP – Monthly Payment</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.mp-filters { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--gray-100); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.mp-filters label { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.member-search-bar { display: flex; align-items: center; gap: 0; flex: 1; max-width: 500px; }
+.member-search-bar input { flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-right: none; border-radius: 3px 0 0 3px; outline: none; font-family: var(--font); font-size: 13px; }
+.member-search-bar button { padding: 8px 14px; background: var(--gray-300); border: 1px solid var(--border); border-radius: 0 3px 3px 0; cursor: pointer; font-size: 14px; }
+.member-search-bar button:hover { background: var(--gray-500); color: var(--white); }
+.payment-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; margin: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.payment-card-header { background: var(--red); color: var(--white); padding: 12px 18px; font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+.payment-card-body { padding: 18px; }
+.payment-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.info-item label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--gray-500); margin-bottom: 3px; letter-spacing: 0.4px; }
+.info-item .val { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+.packages-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); color: var(--gray-700); }
+.package-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--gray-200); gap: 10px; }
+.package-row:last-child { border-bottom: none; }
+.pkg-name { font-weight: 600; font-size: 13px; }
+.pkg-type { font-size: 11px; color: var(--gray-500); }
+.pkg-price { font-family: var(--font-mono); font-weight: 700; color: var(--red); }
+.pkg-select { display: flex; align-items: center; gap: 8px; }
+.total-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: var(--gray-100); border-top: 2px solid var(--border); }
+.total-label { font-size: 14px; font-weight: 700; }
+.total-amount { font-size: 20px; font-weight: 700; font-family: var(--font-mono); color: var(--red); }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--gray-500); }
+.empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+.empty-state p { font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+  <div class="header-left"> <div class="logo-block">
+      <img src="assets/logo osp.png" alt="Logo OSP">
+    </div>
+    <span class="breadcrumb">Home &gt; Monthly Payment</span>
+  </div> <div class="header-icons">
+    <button class="header-icon-btn">⏻</button>
+    <button class="header-icon-btn">⛶</button>
+    <button class="header-icon-btn">👤</button>
+    <button class="header-icon-btn active">🔑</button>
+  </div>
+</header>
+  <div class="body">
+    <nav class="sidebar">
+  <div class="profile-card">
+    <div class="profile-avatar">👤</div>
+    <div class="profile-info">
+      <span class="profile-name">osp_kemang</span>
+      <span class="profile-role">MERCHANT + null</span>
+    </div>
+  </div>
+      <a class="nav-item" href="home.html">Home</a>
+      <a class="nav-item" href="#">Auth</a>
+      <div class="nav-item open" data-toggle="sub-merchant">Manage Merchant <span class="arrow">▾</span></div>
+      <div class="nav-sub open" id="sub-merchant">
+        <a class="nav-sub-item" href="cardverify.html">Card Verify Submission</a>
+        <a class="nav-sub-item" href="members.html">Members</a>
+        <a class="nav-sub-item active" href="monthlypayment.html">Monthly Payment</a>
+      </div>
+      <div class="nav-item" data-toggle="sub-package">Package &amp; Product <span class="arrow">▾</span></div>
+      <div class="nav-sub" id="sub-package"><a class="nav-sub-item" href="product.html">Product</a></div>
+      <div class="nav-item" data-toggle="sub-report">Report <span class="arrow">▾</span></div>
+      <div class="nav-sub" id="sub-report"><a class="nav-sub-item" href="dailytransaction.html">Daily Transaction</a></div>
+    </nav>
+    <main class="main">
+      <div class="mp-filters">
+        <label>Gym</label><select class="form-control" id="gymSelect" onchange="onGymChange()" style="width:200px;"><option>AF Kemang</option><option>AF Senayan</option><option>AF Menteng</option><option>AF Kelapa Gading</option></select>
+        <label>Member</label><div class="member-search-bar"><input type="text" id="memberSearchInput" placeholder="Click button to search member…" readonly onclick="openModal('memberSearchModal')" style="cursor:pointer;"><button onclick="openModal('memberSearchModal')">🔍</button></div>
+        <button class="btn btn-gray btn-sm" onclick="clearMember()">✕ Clear</button>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="memberSearchModal">
+  <div class="modal-box" style="max-width: 800px; width: 90%;"> <div style="margin-bottom: 15px; border-bottom: 1px solid #3498db; padding-bottom: 10px;">
+      <input type="text" 
+             id="modalMemberSearch" 
+             placeholder="Search by member id or member name" 
+             style="width: 100%; border: none; outline: none; font-size: 14px;"
+             oninput="searchModalMembers()">
+    </div>
+
+    <table class="data-table" id="modalMemberTable">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Membership Type</th>
+          <th>Member Name</th>
+          <th>Membership Status</th>
+        </tr>
+      </thead>
+      <tbody id="modalMemberBody">
+        </tbody>
+    </table>
+
+    <div style="text-align: right; margin-top: 15px;">
+       <button class="btn btn-gray" onclick="closeModal('memberSearchModal')">Close</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="payModal">
+  <div class="modal-box"><div class="modal-title">Confirm Payment</div><p style="font-size:13px;margin-bottom:14px;">Confirm payment for the selected packages?</p><div id="payModalSummary" style="font-size:13px;"></div><div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('payModal')">Cancel</button><button class="btn btn-purple" onclick="processPayment()">✔ Process Payment</button></div></div>
+</div>
+<script src="script.js"></script>
+<script>
+const MEMBERS_DATA = [{id:'M001', name:'Andi Saputra', type:'Monthly', status:'ACTIVE', keyfob:'KF-001', email:'andi@email.com'}, {id:'M002', name:'Budi Santoso', type:'Monthly', status:'ACTIVE', keyfob:'KF-002', email:'budi@email.com'}, {id:'M003', name:'Citra Dewi', type:'Yearly', status:'FREEZE', keyfob:'KF-003', email:'citra@email.com'}, {id:'M004', name:'Dian Rahayu', type:'Monthly', status:'ACTIVE', keyfob:'KF-004', email:'dian@email.com'}, {id:'M005', name:'Eko Prasetyo', type:'Monthly', status:'EXPIRED', keyfob:'KF-005', email:'eko@email.com'}, {id:'M006', name:'Fajar Nugroho', type:'Yearly', status:'ACTIVE', keyfob:'KF-006', email:'fajar@email.com'}];
+const PACKAGES = [{id:'P1', name:'Monthly Subscription', type:'Subscription', price:350000}, {id:'P2', name:'Yearly Subscription', type:'Subscription', price:3500000}, {id:'P3', name:'Personal Training', type:'PT Package', price:500000}, {id:'P4', name:'Locker Rental', type:'Merchandise', price:100000}];
+let selectedMember = null; let selectedPackages = {};
+function statusBadge(s) { const m={ACTIVE:'badge-active',EXPIRED:'badge-expired',FREEZE:'badge-freeze',DEFAULTED:'badge-defaulted'}; return `<span class="badge ${m[s]||''}">${s}</span>`; }
+function searchModalMembers() { const q = document.getElementById('modalMemberSearch').value.toLowerCase(); renderModalMembers(MEMBERS_DATA.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q))); }
+function renderModalMembers(data) {
+  const tbody = document.getElementById('modalMemberBody');
+  
+  tbody.innerHTML = data.map(m => `
+    <tr onclick="selectMember(${JSON.stringify(m)})" style="cursor: pointer;">
+      <td>${m.id}</td>
+      <td>${m.type}</td>
+      <td style="font-weight: 600;">${m.name}</td>
+      <td>${m.status}</td>
+    </tr>
+  `).join('');
+}
+function selectMember(m) { selectedMember = m; selectedPackages = {}; document.getElementById('memberSearchInput').value = m.name + ' (' + m.id + ')'; closeModal('memberSearchModal'); renderPaymentCard(); }
+function clearMember() { selectedMember = null; selectedPackages = {}; document.getElementById('memberSearchInput').value = ''; document.getElementById('paymentContent').innerHTML = `<div class="empty-state"><div class="icon">💳</div><p>Select a gym and search for a member to view payment details.</p></div>`; }
+function onGymChange() { if (selectedMember) renderPaymentCard(); }
+function renderPaymentCard() { if (!selectedMember) return; const total = Object.values(selectedPackages).reduce((s,p)=>s+p.price,0); document.getElementById('paymentContent').innerHTML = `<div class="payment-card"><div class="payment-card-header"><span>Payment Details – ${document.getElementById('gymSelect').value}</span><span>${statusBadge(selectedMember.status)}</span></div><div class="payment-card-body"><div class="payment-info-grid"><div class="info-item"><label>Member ID</label><div class="val">${selectedMember.id}</div></div><div class="info-item"><label>Member Name</label><div class="val">${selectedMember.name}</div></div><div class="info-item"><label>Email</label><div class="val">${selectedMember.email}</div></div><div class="info-item"><label>KeyFob</label><div class="val">${selectedMember.keyfob}</div></div><div class="info-item"><label>Membership Type</label><div class="val">${selectedMember.type}</div></div></div><div class="packages-title">Select Package(s)</div>${PACKAGES.map(p => `<div class="package-row"><div><div class="pkg-name">${p.name}</div><div class="pkg-type">${p.type}</div></div><div class="pkg-select"><span class="pkg-price">IDR ${p.price.toLocaleString()}</span><input type="checkbox" id="pkg-${p.id}" onchange="togglePackage('${p.id}',${JSON.stringify(p)})" ${selectedPackages[p.id]?'checked':''}></div></div>`).join('')}</div><div class="total-row"><span class="total-label">Total</span><span class="total-amount">IDR ${total.toLocaleString()}</span></div><div style="padding:12px 18px;display:flex;gap:10px;justify-content:flex-end;background:var(--gray-100);"><button class="btn btn-gray" onclick="clearMember()">✕ Cancel</button><button class="btn btn-purple" onclick="openPayModal()" ${Object.keys(selectedPackages).length===0?'disabled':''}>✔ Process Payment</button></div></div>`; }
+function togglePackage(id, pkg) { if (selectedPackages[id]) delete selectedPackages[id]; else selectedPackages[id] = pkg; renderPaymentCard(); }
+function openPayModal() { const items = Object.values(selectedPackages); const total = items.reduce((s,p)=>s+p.price,0); document.getElementById('payModalSummary').innerHTML = `<table class="data-table" style="margin-bottom:10px;"><thead><tr><th>Package</th><th>Price</th></tr></thead><tbody>${items.map(p=>`<tr><td>${p.name}</td><td>IDR ${p.price.toLocaleString()}</td></tr>`).join('')}</tbody></table><div style="font-weight:700;text-align:right;">Total: IDR ${total.toLocaleString()}</div>`; openModal('payModal'); }
+function processPayment() { closeModal('payModal'); showToast('Payment processed successfully!', 'success'); clearMember(); }
+renderModalMembers(MEMBERS_DATA);
+</script>
+</body>
+</html>

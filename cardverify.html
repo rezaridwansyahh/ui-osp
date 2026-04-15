@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSP – Card Verify Submission</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.cv-content { padding: 16px; }
+.cv-top-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.upload-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 48px 24px; text-align: center; cursor: pointer; transition: border-color 0.18s, background 0.18s; background: var(--gray-100); margin-top: 10px; }
+.upload-zone:hover, .upload-zone.drag-over { border-color: var(--purple); background: rgba(125,60,152,0.04); }
+.upload-zone .icon { font-size: 40px; margin-bottom: 10px; }
+.upload-zone .label { font-size: 15px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }
+.upload-zone .sublabel { font-size: 12px; color: var(--gray-500); }
+.upload-zone input[type=file] { display: none; }
+.file-preview { display: none; margin-top: 16px; background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.file-preview.visible { display: flex; }
+.file-info { display: flex; align-items: center; gap: 10px; }
+.file-icon { font-size: 24px; }
+.file-name { font-weight: 600; font-size: 13px; }
+.file-size { font-size: 11px; color: var(--gray-500); }
+.file-remove { background: none; border: none; color: var(--red); font-size: 18px; cursor: pointer; }
+.submit-row { margin-top: 20px; display: flex; gap: 10px; }
+.template-hint { margin-top: 14px; font-size: 12px; color: var(--gray-500); background: var(--gray-100); border-radius: 4px; padding: 8px 12px; border-left: 3px solid var(--purple); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-block">
+  <img src="assets/logo osp.png" alt="Logo OSP">
+</div>
+      <span class="breadcrumb">Home &gt; Card Verify Submission</span>
+    </div>
+    <div class="header-icons">
+      <button class="header-icon-btn" title="Power">⏻</button>
+      <button class="header-icon-btn" title="Fullscreen">⛶</button>
+      <button class="header-icon-btn" title="Profile">👤</button>
+      <button class="header-icon-btn active" title="Settings">🔑</button>
+    </div>
+  </header>
+  <div class="body">
+    <nav class="sidebar">
+  <div class="profile-card">
+    <div class="profile-avatar">👤</div>
+    <div class="profile-info">
+      <span class="profile-name">osp_kemang</span>
+      <span class="profile-role">MERCHANT + null</span>
+    </div>
+  </div>
+      <a class="nav-item" href="home.html">Home</a>
+      <a class="nav-item" href="#">Auth</a>
+      <div class="nav-item open" data-toggle="sub-merchant">Manage Merchant <span class="arrow">▾</span></div>
+      <div class="nav-sub open" id="sub-merchant">
+        <a class="nav-sub-item active" href="cardverify.html">Card Verify Submission</a>
+        <a class="nav-sub-item" href="members.html">Members</a>
+        <a class="nav-sub-item" href="monthlypayment.html">Monthly Payment</a>
+      </div>
+      <div class="nav-item" data-toggle="sub-package">Package &amp; Product <span class="arrow">▾</span></div>
+      <div class="nav-sub" id="sub-package">
+        <a class="nav-sub-item" href="product.html">Product</a>
+      </div>
+      <div class="nav-item" data-toggle="sub-report">Report <span class="arrow">▾</span></div>
+      <div class="nav-sub" id="sub-report">
+        <a class="nav-sub-item" href="dailytransaction.html">Daily Transaction</a>
+      </div>
+    </nav>
+    <main class="main">
+      <div class="action-bar">
+        <button class="btn btn-gray" onclick="downloadTemplate()">⬇ DOWNLOAD FORMAT TEMPLATE</button>
+      </div>
+      <div class="cv-content">
+        <div class="cv-top-bar"><h2 style="font-size:15px;font-weight:700;color:var(--gray-900);">Upload Card Verify File</h2></div>
+        <div class="template-hint">Please download the format template first, fill it in, then upload the completed file below.</div>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files)">
+          <div class="icon">📂</div>
+          <div class="label">Click to choose a file, or drag &amp; drop here</div>
+          <div class="sublabel">Accepted formats: .xlsx, .xls, .csv</div>
+        </div>
+        <div class="file-preview" id="filePreview">
+          <div class="file-info"><span class="file-icon">📄</span><div><div class="file-name" id="fileName">–</div><div class="file-size" id="fileSize">–</div></div></div>
+          <button class="file-remove" onclick="removeFile()" title="Remove">✕</button>
+        </div>
+        <div class="submit-row">
+          <button class="btn btn-purple" onclick="submitFile()">✔ SUBMIT</button>
+          <button class="btn btn-gray" onclick="removeFile()">✕ CLEAR</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-title">Confirm Submission</div>
+    <p style="font-size:13px;color:var(--gray-700);">Are you sure you want to submit this file for card verification?</p>
+    <div id="confirmFileName" style="margin-top:10px;font-weight:600;font-size:13px;"></div>
+    <div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('confirmModal')">Cancel</button><button class="btn btn-purple" onclick="confirmSubmit()">Submit</button></div>
+  </div>
+</div>
+<script src="script.js"></script>
+<script>
+let selectedFile = null;
+function handleFile(files) { if (!files || !files[0]) return; selectedFile = files[0]; document.getElementById('fileName').textContent = selectedFile.name; document.getElementById('fileSize').textContent = formatBytes(selectedFile.size); document.getElementById('filePreview').classList.add('visible'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('uploadZone').classList.remove('drag-over'); handleFile(e.dataTransfer.files); }
+function removeFile() { selectedFile = null; document.getElementById('fileInput').value = ''; document.getElementById('filePreview').classList.remove('visible'); }
+function submitFile() { if (!selectedFile) { showToast('Please choose a file first.', 'error'); return; } document.getElementById('confirmFileName').textContent = '📄 ' + selectedFile.name; openModal('confirmModal'); }
+function confirmSubmit() { closeModal('confirmModal'); showToast('File submitted successfully!', 'success'); removeFile(); }
+function downloadTemplate() { const csv = '"MemberID","CardNumber","IssueDate","ExpiryDate"\n"","","",""\n'; const blob = new Blob([csv], {type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'card_verify_template.csv'; a.click(); showToast('Template downloaded.', 'success'); }
+function formatBytes(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
+</script>
+</body>
+</html>

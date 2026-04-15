@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSP – Members</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.top-action-bar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--border); background: var(--gray-100); flex-wrap: wrap; }
+.search-right { margin-left: auto; }
+.member-detail-row { font-size: 12px; color: var(--gray-500); }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width:600px){ .modal-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-block">
+  <img src="assets/logo osp.png" alt="Logo OSP">
+</div>
+      <span class="breadcrumb">Home &gt; Members</span>
+    </div>
+    <div class="header-icons">
+      <button class="header-icon-btn">⏻</button>
+      <button class="header-icon-btn">⛶</button>
+      <button class="header-icon-btn">👤</button>
+      <button class="header-icon-btn active">🔑</button>
+    </div>
+  </header>
+  <div class="body">
+    <nav class="sidebar">
+  <div class="profile-card">
+    <div class="profile-avatar">👤</div>
+    <div class="profile-info">
+      <span class="profile-name">osp_kemang</span>
+      <span class="profile-role">MERCHANT + null</span>
+    </div>
+  </div>
+      <a class="nav-item" href="home.html">Home</a>
+      <a class="nav-item" href="#">Auth</a>
+      <div class="nav-item open" data-toggle="sub-merchant">Manage Merchant <span class="arrow">▾</span></div>
+      <div class="nav-sub open" id="sub-merchant">
+        <a class="nav-sub-item" href="cardverify.html">Card Verify Submission</a>
+        <a class="nav-sub-item active" href="members.html">Members</a>
+        <a class="nav-sub-item" href="monthlypayment.html">Monthly Payment</a>
+      </div>
+      <div class="nav-item" data-toggle="sub-package">Package &amp; Product <span class="arrow">▾</span></div>
+      <div class="nav-sub" id="sub-package">
+        <a class="nav-sub-item" href="product.html">Product</a>
+      </div>
+      <div class="nav-item" data-toggle="sub-report">Report <span class="arrow">▾</span></div>
+      <div class="nav-sub" id="sub-report">
+        <a class="nav-sub-item" href="dailytransaction.html">Daily Transaction</a>
+      </div>
+    </nav>
+    <main class="main">
+      <div style="padding:8px 14px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="liteToggle" onchange="toggleLite(this)">Lite Version (Without Bill Info)</label>
+      </div>
+      <div class="top-action-bar">
+        <button class="btn btn-gray" onclick="exportCSV('membersTable','members_export.csv')">⬇ Download</button>
+        <button class="btn btn-gray" onclick="toggleFilter('memberFilter')">⚙ Filter</button>
+        <div class="search-right"><div class="search-wrap"><input type="text" id="memberSearch" placeholder="Search Here…" oninput="liveSearch()"><button>🔍</button></div></div>
+      </div>
+      <div class="filter-panel" id="memberFilter">
+        <div class="filter-row">
+          <div class="filter-group"><label>Register Date (From)</label><input type="date" class="form-control" id="fDateFrom"></div>
+          <div class="filter-group"><label>Register Date (To)</label><input type="date" class="form-control" id="fDateTo"></div>
+          <div class="filter-group"><label>Member Name / ID / Keyfob</label><input type="text" class="form-control" id="fMember" placeholder="Search member…"></div>
+          <div class="filter-group"><label>Status</label><select class="form-control" id="fStatus"><option value="">All Status</option><option>ACTIVE</option><option>DEFAULTED</option><option>EXPIRED</option><option>FREEZE</option></select></div>
+        </div>
+        <div class="filter-actions"><button class="btn btn-gray btn-sm" onclick="resetFilter()">↺ RESET</button><button class="btn btn-purple btn-sm" onclick="applyFilter()">⚙ FILTER</button></div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="membersTable">
+          <thead><tr><th style="width:50px;">No.</th><th>Id <button class="sort-btn" onclick="sortTable('membersTable',1,this)">▼</button></th><th>Member Name <button class="sort-btn" onclick="sortTable('membersTable',2,this)">▼</button></th><th>Email</th><th>KeyFob</th><th>Register</th><th id="billInfoHeader">Bill Info</th><th>Status</th><th style="width:80px;">Action</th></tr></thead>
+          <tbody id="membersBody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer">Total: Row (<span id="membersTable-count">0</span>)<div class="pagination" id="pagination"></div></div>
+    </main>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="memberModal"><div class="modal-box"><div class="modal-title">Member Detail</div><div class="modal-grid" id="memberModalContent"></div><div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('memberModal')">Close</button></div></div></div>
+<script src="script.js"></script>
+<script>
+const MEMBERS = [{id:'M001', name:'Andi Saputra', email:'andi@email.com', keyfob:'KF-001', register:'2024-01-15', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M002', name:'Budi Santoso', email:'budi@email.com', keyfob:'KF-002', register:'2024-02-20', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M003', name:'Citra Dewi', email:'citra@email.com', keyfob:'KF-003', register:'2024-03-10', bill:'IDR 450,000', status:'FREEZE'}, {id:'M004', name:'Dian Rahayu', email:'dian@email.com', keyfob:'KF-004', register:'2024-03-22', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M005', name:'Eko Prasetyo', email:'eko@email.com', keyfob:'KF-005', register:'2024-04-05', bill:'IDR 200,000', status:'EXPIRED'}, {id:'M006', name:'Fajar Nugroho', email:'fajar@email.com', keyfob:'KF-006', register:'2024-04-18', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M007', name:'Gita Lestari', email:'gita@email.com', keyfob:'KF-007', register:'2024-05-01', bill:'IDR 450,000', status:'DEFAULTED'}, {id:'M008', name:'Hendra Wijaya', email:'hendra@email.com', keyfob:'KF-008', register:'2024-05-14', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M009', name:'Indah Pertiwi', email:'indah@email.com', keyfob:'KF-009', register:'2024-06-02', bill:'IDR 200,000', status:'ACTIVE'}, {id:'M010', name:'Joko Susanto', email:'joko@email.com', keyfob:'KF-010', register:'2024-06-19', bill:'IDR 350,000', status:'EXPIRED'}, {id:'M011', name:'Kartika Sari', email:'kartika@email.com', keyfob:'KF-011', register:'2024-07-07', bill:'IDR 450,000', status:'ACTIVE'}, {id:'M012', name:'Lutfi Hakim', email:'lutfi@email.com', keyfob:'KF-012', register:'2024-07-23', bill:'IDR 350,000', status:'FREEZE'}];
+let filteredData = [...MEMBERS]; let liteMode = false; const PAGE_SIZE = 8; let currentPage = 1;
+function statusBadge(s) { const map = {ACTIVE:'badge-active',EXPIRED:'badge-expired',FREEZE:'badge-freeze',DEFAULTED:'badge-defaulted'}; return `<span class="badge ${map[s]||''}">${s}</span>`; }
+function renderTable(data, page) { const tbody = document.getElementById('membersBody'); const start = (page-1)*PAGE_SIZE; const slice = data.slice(start, start+PAGE_SIZE); tbody.innerHTML = slice.map((m, i) => `<tr><td>${start+i+1}.</td><td>${m.id}</td><td>${m.name}</td><td>${m.email}</td><td>${m.keyfob}</td><td>${m.register}</td>${liteMode ? '' : `<td>${m.bill}</td>`}<td>${statusBadge(m.status)}</td><td><button class="btn btn-gray btn-sm" onclick='showMember(${JSON.stringify(m)})'>View</button></td></tr>`).join(''); document.getElementById('membersTable-count').textContent = data.length; renderPagination(data.length, page); }
+function renderPagination(total, page) { const pages = Math.ceil(total/PAGE_SIZE); const pg = document.getElementById('pagination'); if (pages <= 1) { pg.innerHTML = ''; return; } let html = `<button class="pg-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`; for (let i=1;i<=pages;i++) html += `<button class="pg-btn ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`; html += `<button class="pg-btn" onclick="goPage(${page+1})" ${page===pages?'disabled':''}>›</button>`; pg.innerHTML = html; }
+function goPage(p) { const pages = Math.ceil(filteredData.length/PAGE_SIZE); currentPage = Math.max(1, Math.min(p, pages)); renderTable(filteredData, currentPage); }
+function liveSearch() { const q = document.getElementById('memberSearch').value.toLowerCase(); filteredData = MEMBERS.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.keyfob.toLowerCase().includes(q)); currentPage = 1; renderTable(filteredData, currentPage); }
+function applyFilter() { const from = document.getElementById('fDateFrom').value; const to = document.getElementById('fDateTo').value; const member = document.getElementById('fMember').value.toLowerCase(); const status = document.getElementById('fStatus').value; filteredData = MEMBERS.filter(m => { if (from && m.register < from) return false; if (to && m.register > to) return false; if (member && !m.name.toLowerCase().includes(member) && !m.id.toLowerCase().includes(member)) return false; if (status && m.status !== status) return false; return true; }); currentPage = 1; renderTable(filteredData, currentPage); document.getElementById('memberFilter').classList.remove('open'); }
+function resetFilter() { ['fDateFrom','fDateTo','fMember'].forEach(id => document.getElementById(id).value=''); document.getElementById('fStatus').value=''; filteredData = [...MEMBERS]; currentPage = 1; renderTable(filteredData, currentPage); }
+function toggleLite(cb) { liteMode = cb.checked; document.getElementById('billInfoHeader').style.display = liteMode ? 'none' : ''; renderTable(filteredData, currentPage); }
+function showMember(m) { document.getElementById('memberModalContent').innerHTML = `<div class="form-group"><label>Member ID</label><div style="font-weight:600">${m.id}</div></div><div class="form-group"><label>Full Name</label><div>${m.name}</div></div><div class="form-group"><label>Email</label><div>${m.email}</div></div><div class="form-group"><label>KeyFob</label><div>${m.keyfob}</div></div><div class="form-group"><label>Register Date</label><div>${m.register}</div></div><div class="form-group"><label>Bill Info</label><div>${m.bill}</div></div><div class="form-group"><label>Status</label><div>${statusBadge(m.status)}</div></div>`; openModal('memberModal'); }
+renderTable(MEMBERS, 1);
+</script>
+</body>
+</html>

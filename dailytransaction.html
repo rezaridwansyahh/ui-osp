@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSP – Daily Transaction</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.tx-action-bar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--gray-100); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.channel-tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; background: var(--gray-200); color: var(--gray-700); font-family: var(--font-mono); }
+.void-btn { background: none; border: 1px solid var(--red); color: var(--red); border-radius: 3px; padding: 3px 8px; font-size: 11px; cursor: pointer; font-family: var(--font); font-weight: 600; transition: background 0.12s; }
+.void-btn:hover { background: var(--red); color: var(--white); }
+.void-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+  <div class="header-left">
+    <div class="logo-block">
+      <img src="assets/logo osp.png" alt="Logo OSP">
+    </div>
+    <span class="breadcrumb">Home &gt; Report &gt; Daily Transaction</span>
+  </div> <div class="header-icons">
+    <button class="header-icon-btn">⏻</button>
+    <button class="header-icon-btn">⛶</button>
+    <button class="header-icon-btn">👤</button>
+    <button class="header-icon-btn active">🔑</button>
+  </div>
+</header>
+  <div class="body">
+    <nav class="sidebar">
+  <div class="profile-card">
+    <div class="profile-avatar">👤</div>
+    <div class="profile-info">
+      <span class="profile-name">osp_kemang</span>
+      <span class="profile-role">MERCHANT + null</span>
+    </div>
+  </div>
+      <a class="nav-item" href="home.html">Home</a>
+      <a class="nav-item" href="#">Auth</a>
+      <div class="nav-item" data-toggle="sub-merchant">Manage Merchant <span class="arrow">▾</span></div>
+      <div class="nav-sub" id="sub-merchant"><a class="nav-sub-item" href="cardverify.html">Card Verify Submission</a><a class="nav-sub-item" href="members.html">Members</a><a class="nav-sub-item" href="monthlypayment.html">Monthly Payment</a></div>
+      <div class="nav-item" data-toggle="sub-package">Package &amp; Product <span class="arrow">▾</span></div>
+      <div class="nav-sub" id="sub-package"><a class="nav-sub-item" href="product.html">Product</a></div>
+      <div class="nav-item open" data-toggle="sub-report">Report <span class="arrow">▾</span></div>
+      <div class="nav-sub open" id="sub-report"><a class="nav-sub-item active" href="dailytransaction.html">Daily Transaction</a></div>
+    </nav>
+    <main class="main">
+      <div class="tx-action-bar">
+        <button class="btn btn-gray" onclick="exportCSV('txTable','daily_transaction.csv')">⬇ Download</button>
+        <button class="btn btn-gray" onclick="toggleFilter('txFilter')">⚙ Filter</button>
+        <span style="font-size:12px;color:var(--gray-500);">Download Filter Report on Void Trx</span>
+        <div style="margin-left:auto;"><div class="search-wrap"><input type="text" id="txSearch" placeholder="Search Here…" oninput="liveSearch()"><button>🔍</button></div></div>
+      </div>
+      <div class="filter-panel" id="txFilter">
+        <div class="filter-row">
+          <div class="filter-group"><label>Transaction Date (From)</label><input type="date" class="form-control" id="fTxFrom"></div>
+          <div class="filter-group"><label>Transaction Date (To)</label><input type="date" class="form-control" id="fTxTo"></div>
+          <div class="filter-group"><label>Member Name / ID</label><input type="text" class="form-control" id="fTxMember" placeholder="Search member…"></div>
+          <div class="filter-group"><label>Invoice No</label><input type="text" class="form-control" id="fTxInvoice" placeholder="INV-…"></div>
+          <div class="filter-group"><label>Status</label><select class="form-control" id="fTxStatus"><option value="">All Status</option><option>SUCCESS</option><option>PENDING</option><option>VOID</option></select></div>
+          <div class="filter-group"><label>Channel</label><select class="form-control" id="fTxChannel"><option value="">All Channel</option><option>CREDIT</option><option>DEBIT</option><option>CASH</option><option>OTHERS</option><option>OVO</option><option>BANK_TRANSFER</option><option>BANK_TRANSFER_OSP</option><option>VIRTUAL_ACCOUNT</option><option>SPLIT_PAYMENT</option></select></div>
+          <div class="filter-group"><label>Gym</label><select class="form-control" id="fTxGym"><option value="">All Gyms</option><option>AF Kemang</option><option>AF Senayan</option><option>AF Menteng</option></select></div>
+        </div>
+        <div class="filter-actions"><button class="btn btn-gray btn-sm" onclick="resetFilter()">↺ RESET</button><button class="btn btn-purple btn-sm" onclick="applyFilter()">⚙ FILTER</button></div>
+      </div>
+      <div class="table-wrap" style="overflow-x:auto;"><table class="data-table" id="txTable"><thead><tr><th style="width:45px;">No.</th><th>Transaction Date <button class="sort-btn" onclick="sortTable('txTable',1,this)">▼</button></th><th>Invoice <button class="sort-btn" onclick="sortTable('txTable',2,this)">▼</button></th><th>Member</th><th>Total</th><th>Status</th><th>Channel</th><th>Updated By</th><th>Gym</th><th style="width:70px;">Action</th></tr></thead><tbody id="txBody"></tbody></table></div>
+      <div class="table-footer">Total: Row (<span id="txTable-count">0</span>)<div class="pagination" id="txPagination"></div></div>
+    </main>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="voidModal"><div class="modal-box" style="max-width:420px;"><div class="modal-title">Void Transaction</div><p style="font-size:13px;">Are you sure you want to void this transaction?</p><div id="voidModalDetail" style="margin-top:10px;font-size:13px;"></div><div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('voidModal')">Cancel</button><button class="btn btn-red" onclick="confirmVoid()">Void Transaction</button></div></div></div>
+<div class="modal-overlay hidden" id="txDetailModal"><div class="modal-box" style="max-width:500px;"><div class="modal-title">Transaction Detail</div><div id="txDetailContent" class="modal-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;"></div><div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('txDetailModal')">Close</button></div></div></div>
+<script src="script.js"></script>
+<script>
+const TRANSACTIONS = [{id:'T001', date:'2024-07-01', invoice:'INV-20240701-001', member:'Andi Saputra', total:350000, status:'SUCCESS', channel:'CREDIT', updatedBy:'system', gym:'AF Kemang'}, {id:'T002', date:'2024-07-01', invoice:'INV-20240701-002', member:'Budi Santoso', total:350000, status:'SUCCESS', channel:'DEBIT', updatedBy:'system', gym:'AF Kemang'}, {id:'T003', date:'2024-07-02', invoice:'INV-20240702-001', member:'Citra Dewi', total:3500000, status:'PENDING', channel:'BANK_TRANSFER', updatedBy:'admin', gym:'AF Senayan'}, {id:'T004', date:'2024-07-02', invoice:'INV-20240702-002', member:'Dian Rahayu', total:350000, status:'SUCCESS', channel:'CASH', updatedBy:'system', gym:'AF Kemang'}, {id:'T005', date:'2024-07-03', invoice:'INV-20240703-001', member:'Eko Prasetyo', total:500000, status:'VOID', channel:'CREDIT', updatedBy:'admin', gym:'AF Menteng'}, {id:'T006', date:'2024-07-03', invoice:'INV-20240703-002', member:'Fajar Nugroho', total:350000, status:'SUCCESS', channel:'OVO', updatedBy:'system', gym:'AF Kemang'}, {id:'T007', date:'2024-07-04', invoice:'INV-20240704-001', member:'Gita Lestari', total:1500000, status:'SUCCESS', channel:'VIRTUAL_ACCOUNT', updatedBy:'system', gym:'AF Senayan'}, {id:'T008', date:'2024-07-04', invoice:'INV-20240704-002', member:'Hendra Wijaya', total:350000, status:'PENDING', channel:'BANK_TRANSFER_OSP', updatedBy:'admin', gym:'AF Kemang'}, {id:'T009', date:'2024-07-05', invoice:'INV-20240705-001', member:'Indah Pertiwi', total:50000, status:'SUCCESS', channel:'CASH', updatedBy:'system', gym:'AF Kemang'}, {id:'T010', date:'2024-07-05', invoice:'INV-20240705-002', member:'Joko Susanto', total:100000, status:'VOID', channel:'DEBIT', updatedBy:'admin', gym:'AF Menteng'}, {id:'T011', date:'2024-07-06', invoice:'INV-20240706-001', member:'Kartika Sari', total:3500000, status:'SUCCESS', channel:'SPLIT_PAYMENT', updatedBy:'system', gym:'AF Senayan'}, {id:'T012', date:'2024-07-06', invoice:'INV-20240706-002', member:'Lutfi Hakim', total:350000, status:'SUCCESS', channel:'CREDIT', updatedBy:'system', gym:'AF Kemang'}];
+let filteredTx = [...TRANSACTIONS]; let voidTarget = null; const PAGE_SIZE = 8; let currentPage = 1;
+function statusBadge(s){ const m={SUCCESS:'badge-success',PENDING:'badge-pending',VOID:'badge-void'}; return `<span class="badge ${m[s]||''}">${s}</span>`; }
+function renderTable(data, page) { const start = (page-1)*PAGE_SIZE; const slice = data.slice(start, start+PAGE_SIZE); document.getElementById('txBody').innerHTML = slice.map((t,i) => `<tr><td>${start+i+1}.</td><td>${t.date}</td><td style="font-family:var(--font-mono);font-size:12px;">${t.invoice}</td><td>${t.member}</td><td style="font-family:var(--font-mono);">IDR ${t.total.toLocaleString()}</td><td>${statusBadge(t.status)}</td><td><span class="channel-tag">${t.channel}</span></td><td>${t.updatedBy}</td><td>${t.gym}</td><td style="display:flex;gap:4px;"><button class="action-icon" onclick='showTxDetail(${JSON.stringify(t)})' title="View">👁</button><button class="void-btn" onclick='askVoid(${JSON.stringify(t)})' ${t.status==='VOID'?'disabled':''}>Void</button></td></tr>`).join(''); document.getElementById('txTable-count').textContent = data.length; renderPagination(data.length, page); }
+function renderPagination(total, page) { const pages = Math.ceil(total/PAGE_SIZE); const pg = document.getElementById('txPagination'); if (pages<=1){pg.innerHTML='';return;} let html = `<button class="pg-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`; for(let i=1;i<=pages;i++) html+=`<button class="pg-btn ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`; html+=`<button class="pg-btn" onclick="goPage(${page+1})" ${page===pages?'disabled':''}>›</button>`; pg.innerHTML=html; }
+function goPage(p) { const pages = Math.ceil(filteredTx.length/PAGE_SIZE); currentPage = Math.max(1, Math.min(p, pages)); renderTable(filteredTx, currentPage); }
+function liveSearch() { const q = document.getElementById('txSearch').value.toLowerCase(); filteredTx = TRANSACTIONS.filter(t => t.invoice.toLowerCase().includes(q) || t.member.toLowerCase().includes(q) || t.channel.toLowerCase().includes(q) || t.status.toLowerCase().includes(q)); currentPage=1; renderTable(filteredTx, 1); }
+function applyFilter() { const from = document.getElementById('fTxFrom').value; const to = document.getElementById('fTxTo').value; const member = document.getElementById('fTxMember').value.toLowerCase(); const invoice = document.getElementById('fTxInvoice').value.toLowerCase(); const status = document.getElementById('fTxStatus').value; const channel = document.getElementById('fTxChannel').value; const gym = document.getElementById('fTxGym').value; filteredTx = TRANSACTIONS.filter(t => { if (from && t.date < from) return false; if (to && t.date > to) return false; if (member && !t.member.toLowerCase().includes(member)) return false; if (invoice && !t.invoice.toLowerCase().includes(invoice)) return false; if (status && t.status !== status) return false; if (channel && t.channel !== channel) return false; if (gym && t.gym !== gym) return false; return true; }); currentPage=1; renderTable(filteredTx,1); document.getElementById('txFilter').classList.remove('open'); }
+function resetFilter() { ['fTxFrom','fTxTo','fTxMember','fTxInvoice'].forEach(id=>document.getElementById(id).value=''); ['fTxStatus','fTxChannel','fTxGym'].forEach(id=>document.getElementById(id).value=''); filteredTx=[...TRANSACTIONS]; currentPage=1; renderTable(filteredTx,1); }
+function askVoid(t) { voidTarget = t.id; document.getElementById('voidModalDetail').innerHTML = `<strong>${t.invoice}</strong><br>Member: ${t.member}<br>Total: IDR ${t.total.toLocaleString()}`; openModal('voidModal'); }
+function confirmVoid() { const tx = TRANSACTIONS.find(t=>t.id===voidTarget); if (tx) tx.status = 'VOID'; filteredTx = [...TRANSACTIONS]; renderTable(filteredTx, currentPage); closeModal('voidModal'); showToast('Transaction voided.','success'); }
+function showTxDetail(t) { document.getElementById('txDetailContent').innerHTML = `<div class="form-group"><label>Invoice</label><div style="font-family:var(--font-mono);font-size:12px;">${t.invoice}</div></div><div class="form-group"><label>Date</label><div>${t.date}</div></div><div class="form-group"><label>Member</label><div>${t.member}</div></div><div class="form-group"><label>Total</label><div style="font-family:var(--font-mono);font-weight:700;">IDR ${t.total.toLocaleString()}</div></div><div class="form-group"><label>Status</label><div>${statusBadge(t.status)}</div></div><div class="form-group"><label>Channel</label><div><span class="channel-tag">${t.channel}</span></div></div><div class="form-group"><label>Updated By</label><div>${t.updatedBy}</div></div><div class="form-group"><label>Gym</label><div>${t.gym}</div></div>`; openModal('txDetailModal'); }
+renderTable(TRANSACTIONS, 1);
+</script>
+</body>
+</html>
