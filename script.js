@@ -2,34 +2,67 @@
    OSP UI - Shared JavaScript Utilities
    ============================================================ */
 
-// ── Sidebar accordion ──────────────────────────────────────
+// ── Sidebar accordion (menu toggle) ──────────────────────────
 function initSidebar() {
-  document.querySelectorAll('.nav-item[data-toggle]').forEach(item => {
-    item.addEventListener('click', () => {
-      const targetId = item.dataset.toggle;
+  document.querySelectorAll('[data-menu-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-menu-toggle');
       const sub = document.getElementById(targetId);
+      if (!sub) return;
       const isOpen = sub.classList.contains('open');
-      // Close all
-      document.querySelectorAll('.nav-sub').forEach(s => s.classList.remove('open'));
-      document.querySelectorAll('.nav-item[data-toggle]').forEach(i => i.classList.remove('open'));
-      // Toggle clicked
+
+      // Tutup semua submenu
+      document.querySelectorAll('.menu-sub').forEach(s => s.classList.remove('open'));
+      document.querySelectorAll('[data-menu-toggle]').forEach(b => b.classList.remove('open'));
+
+      // Toggle yang diklik
       if (!isOpen) {
         sub.classList.add('open');
-        item.classList.add('open');
+        btn.classList.add('open');
       }
     });
   });
 
-  // Auto-open parent of active sub-item
-  document.querySelectorAll('.nav-sub-item.active').forEach(item => {
-    const sub = item.closest('.nav-sub');
+  // Auto-open parent dari sub-link yang aktif
+  document.querySelectorAll('.menu-sub-link.active').forEach(link => {
+    const sub = link.closest('.menu-sub');
     if (sub) {
       sub.classList.add('open');
-      const parentToggle = document.querySelector(`[data-toggle="${sub.id}"]`);
-      if (parentToggle) parentToggle.classList.add('open');
+      const toggle = document.querySelector(`[data-menu-toggle="${sub.id}"]`);
+      if (toggle) toggle.classList.add('open');
     }
   });
 }
+
+// ── Toggle sidebar mobile ────────────────────────────────────
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (!sidebar || !overlay) return;
+
+  const isHidden = sidebar.classList.contains('-translate-x-full');
+
+  if (isHidden) {
+    sidebar.classList.remove('-translate-x-full');
+    overlay.classList.remove('hidden');
+  } else {
+    sidebar.classList.add('-translate-x-full');
+    overlay.classList.add('hidden');
+  }
+}
+
+// Auto-close sidebar saat resize ke desktop
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 1024) {
+    const overlay = document.getElementById('sidebarOverlay');
+    if (overlay) overlay.classList.add('hidden');
+  } else {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) sidebar.classList.add('-translate-x-full');
+    if (overlay) overlay.classList.add('hidden');
+  }
+});
 
 // ── Toast notification ─────────────────────────────────────
 function showToast(msg, type = '') {
@@ -51,7 +84,7 @@ function closeModal(id) {
   const m = document.getElementById(id);
   if (m) { m.classList.add('hidden'); document.body.style.overflow = ''; }
 }
-// Close on overlay click
+
 document.addEventListener('click', e => {
   if (e.target.classList.contains('modal-overlay')) {
     e.target.classList.add('hidden');
@@ -120,4 +153,5 @@ function exportCSV(tableId, filename) {
 // ── On DOM ready ────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initSidebar();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 });

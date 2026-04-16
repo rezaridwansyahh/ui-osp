@@ -4,185 +4,280 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OSP – Home</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['IBM Plex Sans', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
+      }
+    }
+  }
+}
+</script>
 <link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
-<body>
-<div class="app">
-  <header class="header">
-    <div class="header-left">
-      <div class="logo-block"><img src="assets/logo osp.png" alt="Logo OSP"></div>
-      <span class="breadcrumb">Home</span>
+<body class="font-sans bg-gray-50 h-screen overflow-hidden">
+<div class="flex h-screen">
+  <!-- Overlay sidebar buat mobile -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-800 z-50 transform -translate-x-full lg:translate-x-0 lg:static lg:z-auto transition-transform duration-300 ease-in-out flex flex-col flex-shrink-0">
+    <!-- Logo -->
+    <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-700 flex-shrink-0">
+      <img src="assets/logo osp.png" alt="Logo OSP" class="h-8 w-auto">
+      <span class="text-white font-bold text-lg tracking-tight">OSP</span>
     </div>
-    <div class="header-icons">
-  <button class="header-icon-btn">⏻</button>
-  <button class="header-icon-btn active" onclick="openModal('authModal')">🔑</button>
-</div>
-  </header>
-<div class="body">
-  <nav class="sidebar">
-    <div class="profile-card">
-      <div class="profile-avatar">👤</div>
-      <div class="profile-info">
-        <span class="profile-name">osp_kemang</span>
-        <span class="profile-role">MERCHANT + null</span>
+
+    <!-- Profile Card -->
+    <div class="mx-3 mt-4 mb-2 p-3 bg-slate-700/50 rounded-xl flex items-center gap-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-400 rounded-full flex items-center justify-center flex-shrink-0">
+        <i data-lucide="user" class="w-5 h-5 text-white"></i>
       </div>
-    </div> <a class="nav-item active" href="home.html">Home</a>
-    <a class="nav-item" href="#">Auth</a>
-    <div class="nav-item" data-toggle="sub-merchant">Manage Merchant <span class="arrow">▾</span></div>
-  <div class="nav-sub" id="sub-merchant">
-    <a class="nav-sub-item" href="cardverify.html">Card Verify Submission</a>
-    <a class="nav-sub-item" href="members.html">Members</a>
-    <a class="nav-sub-item" href="monthlypayment.html">Monthly Payment</a>
-  </div>
-  
-  <div class="nav-item" data-toggle="sub-report">Report <span class="arrow">▾</span></div>
-  <div class="nav-sub" id="sub-report">
-    <a class="nav-sub-item" href="dailytransaction.html">Daily Transaction</a>
-  </div>
-</nav>
-    <main class="main">
-      <div style="padding: 24px;">
-        <div class="stat-box" style="padding: 24px; text-align: left;">
-          <h1 style="font-size: 20px; font-weight: 600;">👋 Welcome back, <span class="text-blue">osp_kemang</span>!</h1>
-          <div style="margin-top: 12px; font-size: 12px; color: var(--gray-700); line-height: 1.8;">
-            <div><b>User ID:</b> 803</div>
-            <div><b>Access Type:</b> MERCHANT</div>
-            <div><b>Gym Access:</b> AF Kemang (ID: 10)</div>
-            <div><b>Login Time:</b> 15 Apr 2026 04:42:31</div>
+      <div class="min-w-0">
+        <div class="text-white text-sm font-semibold truncate">osp_kemang</div>
+        <div class="text-slate-400 text-xs uppercase tracking-wider">MERCHANT</div>
+      </div>
+    </div>
+
+    <!-- Navigasi -->
+    <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-1 sidebar-scrollbar">
+      <a href="home.html" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-white/10 text-white">
+        <i data-lucide="home" class="w-[18px] h-[18px] flex-shrink-0"></i>
+        Home
+      </a>
+
+      <!-- Manage Merchant -->
+      <div>
+        <button data-menu-toggle="sub-merchant" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+          <span class="flex items-center gap-3">
+            <i data-lucide="store" class="w-[18px] h-[18px] flex-shrink-0"></i>
+            Manage Merchant
+          </span>
+          <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
+        </button>
+        <div class="menu-sub" id="sub-merchant">
+          <div class="ml-[30px] pl-3 border-l border-slate-600 mt-1 space-y-0.5">
+            <a href="cardverify.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Card Verify Submission</a>
+            <a href="members.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Members</a>
+            <a href="monthlypayment.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Monthly Payment</a>
           </div>
         </div>
       </div>
-      <div class="container-fluid px-4 py-3">
-  <div class="row g-3 mb-3">
-    <div class="col-md-3">
-      <div class="card h-100 border-0 border-top border-4 border-primary shadow-sm">
-        <div class="card-body text-center py-4">
-          <h2 class="card-value text-primary">45</h2>
-          <p class="card-title text-secondary mb-0">New Members (This Month)</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card h-100 border-0 border-top border-4 border-success shadow-sm">
-        <div class="card-body text-center py-4">
-          <h2 class="card-value text-success">1054</h2>
-          <p class="card-title text-secondary mb-0">Total Active Members</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card h-100 border-0 border-top border-4 border-danger shadow-sm">
-        <div class="card-body text-center py-4">
-          <h2 class="card-value text-danger">4579</h2>
-          <p class="card-title text-secondary mb-0">Defaulted Members</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card h-100 border-0 border-top border-4 border-warning shadow-sm">
-        <div class="card-body text-center py-4">
-          <h2 class="card-value text-warning">52</h2>
-          <p class="card-title text-secondary mb-0">Freeze Members</p>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="row g-3">
-    <div class="col-md-3">
-      <div class="card h-100 border-0 border-top border-4 shadow-sm" style="border-color: #8e44ad !important;">
-        <div class="card-body text-center py-4">
-          <h2 class="card-value" style="color: #8e44ad;">992</h2>
-          <p class="card-title text-secondary mb-0">EFT Members</p>
+      <!-- Package & Product -->
+      <div>
+        <button data-menu-toggle="sub-package" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+          <span class="flex items-center gap-3">
+            <i data-lucide="package" class="w-[18px] h-[18px] flex-shrink-0"></i>
+            Package &amp; Product
+          </span>
+          <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
+        </button>
+        <div class="menu-sub" id="sub-package">
+          <div class="ml-[30px] pl-3 border-l border-slate-600 mt-1 space-y-0.5">
+            <a href="product.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Product</a>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card h-100 border-0 border-top border-4 border-success shadow-sm">
-        <div class="card-body text-center py-4">
-          <h2 class="card-value text-success">226</h2>
-          <p class="card-title text-secondary mb-0">PIF Members</p>
+
+      <!-- Report -->
+      <div>
+        <button data-menu-toggle="sub-report" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+          <span class="flex items-center gap-3">
+            <i data-lucide="bar-chart-3" class="w-[18px] h-[18px] flex-shrink-0"></i>
+            Report
+          </span>
+          <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
+        </button>
+        <div class="menu-sub" id="sub-report">
+          <div class="ml-[30px] pl-3 border-l border-slate-600 mt-1 space-y-0.5">
+            <a href="dailytransaction.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Daily Transaction</a>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card h-100 border-0 border-top border-4 border-primary shadow-sm">
-        <div class="card-body text-center py-4">
-          <h2 class="card-value text-primary">719</h2>
-          <p class="card-title text-secondary mb-0">Male Members</p>
+    </nav>
+  </aside>
+
+  <!-- Main wrapper -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <!-- Navbar -->
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 shadow-sm">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors">
+          <i data-lucide="menu" class="w-5 h-5 text-gray-600"></i>
+        </button>
+        <div class="flex items-center text-sm">
+          <span class="text-gray-900 font-semibold">Home</span>
         </div>
       </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card h-100 border-0 border-top border-4 border-danger shadow-sm">
-        <div class="card-body text-center py-4">
-          <h2 class="card-value text-danger">499</h2>
-          <p class="card-title text-secondary mb-0">Female Members</p>
+      <div class="flex items-center gap-1">
+        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Power">
+          <i data-lucide="power" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i>
+        </button>
+        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Fullscreen">
+          <i data-lucide="maximize" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i>
+        </button>
+        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Profile">
+          <i data-lucide="user-circle" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i>
+        </button>
+        <button class="p-2 rounded-lg hover:bg-red-50 transition-colors group" title="Auth" onclick="openModal('authModal')">
+          <i data-lucide="key-round" class="w-5 h-5 text-red-400 group-hover:text-red-600"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 lg:p-6">
+      <!-- Welcome Banner -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 p-6 lg:p-8 mb-5 shadow-lg">
+        <!-- Pattern background -->
+        <div class="absolute inset-0 opacity-[0.07]" style="background-image: url('data:image/svg+xml,<svg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><g fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;><g fill=&quot;%23ffffff&quot; fill-opacity=&quot;1&quot;><path d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/></g></g></svg>');"></div>
+        <!-- Gradient accent -->
+        <div class="absolute -top-20 -right-20 w-60 h-60 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-gradient-to-tr from-red-500/15 to-orange-500/15 rounded-full blur-3xl"></div>
+
+        <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+          <!-- Kiri: greeting + info -->
+          <div class="flex items-start gap-4">
+            <div class="hidden sm:flex w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/25">
+              <i data-lucide="layout-dashboard" class="w-7 h-7 text-white"></i>
+            </div>
+            <div>
+              <p class="text-sm text-blue-300 font-medium mb-1">Dashboard Overview</p>
+              <h1 class="text-2xl lg:text-3xl font-bold text-white">
+                Welcome back, <span class="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">osp_kemang</span>
+              </h1>
+            </div>
+          </div>
+
+          <!-- Kanan: info cards -->
+          <div class="grid grid-cols-2 gap-3 lg:gap-4">
+            <div class="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
+              <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">User ID</p>
+              <p class="text-white font-bold text-sm mt-0.5">803</p>
+            </div>
+            <div class="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
+              <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Access Type</p>
+              <p class="text-white font-bold text-sm mt-0.5 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>MERCHANT
+              </p>
+            </div>
+            <div class="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
+              <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Gym Access</p>
+              <p class="text-white font-bold text-sm mt-0.5">AF Kemang</p>
+            </div>
+            <div class="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
+              <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Login Time</p>
+              <p class="text-white font-bold text-sm mt-0.5">15 Apr, 04:42</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+
+      <!-- Stat Cards dengan Mini Sparkline -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+        <!-- New Members -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
+          <div>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">New Members</p>
+            <p class="text-2xl font-bold text-blue-500 mt-1">45</p>
+            <p class="text-xs text-emerald-500 font-medium mt-1">+12% vs last month</p>
+          </div>
+          <div id="sparkNew" class="flex-shrink-0"></div>
+        </div>
+        <!-- Total Active -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
+          <div>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Total Active</p>
+            <p class="text-2xl font-bold text-emerald-500 mt-1">1,054</p>
+            <p class="text-xs text-emerald-500 font-medium mt-1">+3.2% growth</p>
+          </div>
+          <div id="sparkActive" class="flex-shrink-0"></div>
+        </div>
+        <!-- Defaulted -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
+          <div>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Defaulted</p>
+            <p class="text-2xl font-bold text-red-500 mt-1">4,579</p>
+            <p class="text-xs text-red-400 font-medium mt-1">+1.8% increase</p>
+          </div>
+          <div id="sparkDefaulted" class="flex-shrink-0"></div>
+        </div>
+        <!-- Freeze -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
+          <div>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Freeze</p>
+            <p class="text-2xl font-bold text-amber-500 mt-1">52</p>
+            <p class="text-xs text-amber-500 font-medium mt-1">-5% decrease</p>
+          </div>
+          <div id="sparkFreeze" class="flex-shrink-0"></div>
+        </div>
+      </div>
+
+      <!-- Chart Row 1: Trend + Donut -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+        <!-- Area Chart - New Members Trend -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h3 class="text-sm font-semibold text-gray-800 mb-1">New Members Trend</h3>
+          <p class="text-xs text-gray-400 mb-3">Jumlah pendaftaran member baru per bulan</p>
+          <div id="chartMemberTrend"></div>
+        </div>
+        <!-- Donut - Member Status -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h3 class="text-sm font-semibold text-gray-800 mb-1">Member Status</h3>
+          <p class="text-xs text-gray-400 mb-3">Distribusi status seluruh member</p>
+          <div id="chartMemberStatus"></div>
+        </div>
+      </div>
+
+      <!-- Chart Row 2: Bar + Radial -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <!-- Bar Chart - Payment Type -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h3 class="text-sm font-semibold text-gray-800 mb-1">Payment Type</h3>
+          <p class="text-xs text-gray-400 mb-3">Perbandingan member EFT vs PIF</p>
+          <div id="chartPaymentType"></div>
+        </div>
+        <!-- Radial Bar - Gender -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h3 class="text-sm font-semibold text-gray-800 mb-1">Gender Distribution</h3>
+          <p class="text-xs text-gray-400 mb-3">Proporsi gender dari total member aktif</p>
+          <div id="chartGender"></div>
+        </div>
+      </div>
     </main>
   </div>
 </div>
-<script src="script.js"></script>
-<div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold" style="font-size: 18px;">OSP Kemang @ AF Kemang</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body py-4">
-        <div class="row g-4">
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label class="modal-profile-label">User Id</label>
-              <input type="text" class="form-control modal-profile-input" value="osp_kemang">
-            </div>
-            <div class="mb-3">
-              <label class="modal-profile-label">Title</label>
-              <select class="form-select modal-profile-input">
-                <option selected>Mr</option>
-                <option>Ms</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="modal-profile-label">First Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control modal-profile-input" value="OSP">
-            </div>
-            <div class="mb-3">
-              <label class="modal-profile-label">Last Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control modal-profile-input" value="Kemang">
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label class="modal-profile-label">Short Name</label>
-              <input type="text" class="form-control modal-profile-input" placeholder="e.g., nickname or initials">
-            </div>
-            <div class="mb-3">
-              <label class="modal-profile-label">Email <span class="text-danger">*</span></label>
-              <input type="email" class="form-control modal-profile-input" value="osp@kemang.id">
-            </div>
-            <div class="mb-3">
-              <label class="modal-profile-label">Phone</label>
-              <input type="text" class="form-control modal-profile-input" placeholder="e.g., +62 812 3456 7890">
-            </div>
-            <div class="mb-3">
-              <label class="modal-profile-label">Role</label>
-              <input type="text" class="form-control modal-profile-input" value="Bookkeeper">
-            </div>
-          </div>
-        </div>
-        <div class="mt-4">
-          <button class="btn btn-save-osp">💾 SAVE</button>
-        </div>
-      </div>
+
+<!-- User Profile Modal -->
+<div class="modal-overlay hidden" id="userProfileModal">
+  <div class="modal-box" style="max-width: 640px;">
+    <div class="modal-title">OSP Kemang @ AF Kemang</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group"><label>User Id</label><input type="text" class="form-control" value="osp_kemang"></div>
+      <div class="form-group"><label>Short Name</label><input type="text" class="form-control" placeholder="e.g., nickname or initials"></div>
+      <div class="form-group"><label>Title</label><select class="form-control"><option selected>Mr</option><option>Ms</option></select></div>
+      <div class="form-group"><label>Email <span style="color:#c0392b">*</span></label><input type="email" class="form-control" value="osp@kemang.id"></div>
+      <div class="form-group"><label>First Name <span style="color:#c0392b">*</span></label><input type="text" class="form-control" value="OSP"></div>
+      <div class="form-group"><label>Phone</label><input type="text" class="form-control" placeholder="e.g., +62 812 3456 7890"></div>
+      <div class="form-group"><label>Last Name <span style="color:#c0392b">*</span></label><input type="text" class="form-control" value="Kemang"></div>
+      <div class="form-group"><label>Role</label><input type="text" class="form-control" value="Bookkeeper"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal('userProfileModal')">Cancel</button>
+      <button class="btn btn-purple">💾 SAVE</button>
     </div>
   </div>
 </div>
+
+<script src="script.js"></script>
+<script src="home-charts.js"></script>
 </body>
 </html>

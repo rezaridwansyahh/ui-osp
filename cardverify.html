@@ -4,7 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OSP – Card Verify Submission</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['IBM Plex Sans', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
+      }
+    }
+  }
+}
+</script>
 <link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
 .cv-content { padding: 16px; }
 .cv-top-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
@@ -25,48 +40,89 @@
 .template-hint { margin-top: 14px; font-size: 12px; color: var(--gray-500); background: var(--gray-100); border-radius: 4px; padding: 8px 12px; border-left: 3px solid var(--purple); }
 </style>
 </head>
-<body>
-<div class="app">
-  <header class="header">
-    <div class="header-left">
-      <div class="logo-block">
-  <img src="assets/logo osp.png" alt="Logo OSP">
-</div>
-      <span class="breadcrumb">Home &gt; Card Verify Submission</span>
+<body class="font-sans bg-gray-50 h-screen overflow-hidden">
+<div class="flex h-screen">
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleSidebar()"></div>
+
+  <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-800 z-50 transform -translate-x-full lg:translate-x-0 lg:static lg:z-auto transition-transform duration-300 ease-in-out flex flex-col flex-shrink-0">
+    <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-700 flex-shrink-0">
+      <img src="assets/logo osp.png" alt="Logo OSP" class="h-8 w-auto">
+      <span class="text-white font-bold text-lg tracking-tight">OSP</span>
     </div>
-    <div class="header-icons">
-      <button class="header-icon-btn" title="Power">⏻</button>
-      <button class="header-icon-btn" title="Fullscreen">⛶</button>
-      <button class="header-icon-btn" title="Profile">👤</button>
-      <button class="header-icon-btn active" title="Settings">🔑</button>
-    </div>
-  </header>
-  <div class="body">
-    <nav class="sidebar">
-  <div class="profile-card">
-    <div class="profile-avatar">👤</div>
-    <div class="profile-info">
-      <span class="profile-name">osp_kemang</span>
-      <span class="profile-role">MERCHANT + null</span>
-    </div>
-  </div>
-      <a class="nav-item" href="home.html">Home</a>
-      <a class="nav-item" href="#">Auth</a>
-      <div class="nav-item open" data-toggle="sub-merchant">Manage Merchant <span class="arrow">▾</span></div>
-      <div class="nav-sub open" id="sub-merchant">
-        <a class="nav-sub-item active" href="cardverify.html">Card Verify Submission</a>
-        <a class="nav-sub-item" href="members.html">Members</a>
-        <a class="nav-sub-item" href="monthlypayment.html">Monthly Payment</a>
+    <div class="mx-3 mt-4 mb-2 p-3 bg-slate-700/50 rounded-xl flex items-center gap-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-400 rounded-full flex items-center justify-center flex-shrink-0">
+        <i data-lucide="user" class="w-5 h-5 text-white"></i>
       </div>
-      <div class="nav-item" data-toggle="sub-package">Package &amp; Product <span class="arrow">▾</span></div>
-      <div class="nav-sub" id="sub-package">
-        <a class="nav-sub-item" href="product.html">Product</a>
+      <div class="min-w-0">
+        <div class="text-white text-sm font-semibold truncate">osp_kemang</div>
+        <div class="text-slate-400 text-xs uppercase tracking-wider">MERCHANT</div>
       </div>
-      <div class="nav-item" data-toggle="sub-report">Report <span class="arrow">▾</span></div>
-      <div class="nav-sub" id="sub-report">
-        <a class="nav-sub-item" href="dailytransaction.html">Daily Transaction</a>
+    </div>
+    <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-1 sidebar-scrollbar">
+      <a href="home.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+        <i data-lucide="home" class="w-[18px] h-[18px] flex-shrink-0"></i>Home
+      </a>
+      <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+        <i data-lucide="shield-check" class="w-[18px] h-[18px] flex-shrink-0"></i>Auth
+      </a>
+      <div>
+        <button data-menu-toggle="sub-merchant" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+          <span class="flex items-center gap-3"><i data-lucide="store" class="w-[18px] h-[18px] flex-shrink-0"></i>Manage Merchant</span>
+          <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
+        </button>
+        <div class="menu-sub" id="sub-merchant">
+          <div class="ml-[30px] pl-3 border-l border-slate-600 mt-1 space-y-0.5">
+            <a href="cardverify.html" class="menu-sub-link active block px-3 py-2 rounded-md text-sm text-white bg-white/5 font-medium">Card Verify Submission</a>
+            <a href="members.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Members</a>
+            <a href="monthlypayment.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Monthly Payment</a>
+          </div>
+        </div>
+      </div>
+      <div>
+        <button data-menu-toggle="sub-package" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+          <span class="flex items-center gap-3"><i data-lucide="package" class="w-[18px] h-[18px] flex-shrink-0"></i>Package &amp; Product</span>
+          <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
+        </button>
+        <div class="menu-sub" id="sub-package">
+          <div class="ml-[30px] pl-3 border-l border-slate-600 mt-1 space-y-0.5">
+            <a href="product.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Product</a>
+          </div>
+        </div>
+      </div>
+      <div>
+        <button data-menu-toggle="sub-report" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+          <span class="flex items-center gap-3"><i data-lucide="bar-chart-3" class="w-[18px] h-[18px] flex-shrink-0"></i>Report</span>
+          <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
+        </button>
+        <div class="menu-sub" id="sub-report">
+          <div class="ml-[30px] pl-3 border-l border-slate-600 mt-1 space-y-0.5">
+            <a href="dailytransaction.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Daily Transaction</a>
+          </div>
+        </div>
       </div>
     </nav>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 shadow-sm">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors">
+          <i data-lucide="menu" class="w-5 h-5 text-gray-600"></i>
+        </button>
+        <div class="flex items-center text-sm gap-1.5">
+          <a href="home.html" class="text-gray-400 hover:text-gray-600 transition-colors">Home</a>
+          <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-gray-300"></i>
+          <span class="text-gray-900 font-semibold">Card Verify Submission</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Power"><i data-lucide="power" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i></button>
+        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Fullscreen"><i data-lucide="maximize" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i></button>
+        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Profile"><i data-lucide="user-circle" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i></button>
+        <button class="p-2 rounded-lg hover:bg-red-50 transition-colors group" title="Auth"><i data-lucide="key-round" class="w-5 h-5 text-red-400 group-hover:text-red-600"></i></button>
+      </div>
+    </header>
+
     <main class="main">
       <div class="action-bar">
         <button class="btn btn-gray" onclick="downloadTemplate()">⬇ DOWNLOAD FORMAT TEMPLATE</button>
@@ -92,6 +148,7 @@
     </main>
   </div>
 </div>
+
 <div class="modal-overlay hidden" id="confirmModal">
   <div class="modal-box">
     <div class="modal-title">Confirm Submission</div>
