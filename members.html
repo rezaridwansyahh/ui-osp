@@ -21,11 +21,30 @@ tailwind.config = {
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
-.top-action-bar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--border); background: var(--gray-100); flex-wrap: wrap; }
-.search-right { margin-left: auto; }
-.member-detail-row { font-size: 12px; color: var(--gray-500); }
-.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media(max-width:600px){ .modal-grid { grid-template-columns: 1fr; } }
+/* Toggle switch */
+.toggle-switch { position: relative; width: 36px; height: 20px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: #cbd5e1; border-radius: 999px;
+  cursor: pointer; transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute; width: 16px; height: 16px;
+  left: 2px; top: 2px; background: white; border-radius: 50%;
+  transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.toggle-switch input:checked + .toggle-slider { background: #7c3aed; }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+/* Filter panel animation */
+.filter-container { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+.filter-container.open { max-height: 400px; }
+
+/* Slide-over panel */
+.slide-panel { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+.slide-panel.open { transform: translateX(0); }
+.slide-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.slide-overlay.open { opacity: 1; pointer-events: auto; }
 </style>
 </head>
 <body class="font-sans bg-gray-50 h-screen overflow-hidden">
@@ -49,15 +68,11 @@ tailwind.config = {
     </div>
     <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-1 sidebar-scrollbar">
       <a href="home.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-        <i data-lucide="home" class="w-[18px] h-[18px] flex-shrink-0"></i>
-        Home
+        <i data-lucide="home" class="w-[18px] h-[18px] flex-shrink-0"></i>Home
       </a>
       <div>
         <button data-menu-toggle="sub-merchant" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-          <span class="flex items-center gap-3">
-            <i data-lucide="store" class="w-[18px] h-[18px] flex-shrink-0"></i>
-            Manage Merchant
-          </span>
+          <span class="flex items-center gap-3"><i data-lucide="store" class="w-[18px] h-[18px] flex-shrink-0"></i>Manage Merchant</span>
           <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
         </button>
         <div class="menu-sub" id="sub-merchant">
@@ -70,10 +85,7 @@ tailwind.config = {
       </div>
       <div>
         <button data-menu-toggle="sub-package" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-          <span class="flex items-center gap-3">
-            <i data-lucide="package" class="w-[18px] h-[18px] flex-shrink-0"></i>
-            Package &amp; Product
-          </span>
+          <span class="flex items-center gap-3"><i data-lucide="package" class="w-[18px] h-[18px] flex-shrink-0"></i>Package &amp; Product</span>
           <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
         </button>
         <div class="menu-sub" id="sub-package">
@@ -84,10 +96,7 @@ tailwind.config = {
       </div>
       <div>
         <button data-menu-toggle="sub-report" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-          <span class="flex items-center gap-3">
-            <i data-lucide="bar-chart-3" class="w-[18px] h-[18px] flex-shrink-0"></i>
-            Report
-          </span>
+          <span class="flex items-center gap-3"><i data-lucide="bar-chart-3" class="w-[18px] h-[18px] flex-shrink-0"></i>Report</span>
           <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
         </button>
         <div class="menu-sub" id="sub-report">
@@ -113,64 +122,395 @@ tailwind.config = {
         </div>
       </div>
       <div class="flex items-center gap-1">
-        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Power">
-          <i data-lucide="power" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i>
-        </button>
-        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Fullscreen">
-          <i data-lucide="maximize" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i>
-        </button>
-        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Profile">
-          <i data-lucide="user-circle" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i>
-        </button>
-        <button class="p-2 rounded-lg hover:bg-red-50 transition-colors group" title="Auth">
-          <i data-lucide="key-round" class="w-5 h-5 text-red-400 group-hover:text-red-600"></i>
-        </button>
+        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Power"><i data-lucide="power" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i></button>
+        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Fullscreen"><i data-lucide="maximize" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i></button>
+        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Profile"><i data-lucide="user-circle" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i></button>
+        <button class="p-2 rounded-lg hover:bg-red-50 transition-colors group" title="Auth"><i data-lucide="key-round" class="w-5 h-5 text-red-400 group-hover:text-red-600"></i></button>
       </div>
     </header>
 
-    <main class="main">
-      <div style="padding:8px 14px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="liteToggle" onchange="toggleLite(this)">Lite Version (Without Bill Info)</label>
-      </div>
-      <div class="top-action-bar">
-        <button class="btn btn-gray" onclick="exportCSV('membersTable','members_export.csv')">⬇ Download</button>
-        <button class="btn btn-gray" onclick="toggleFilter('memberFilter')">⚙ Filter</button>
-        <div class="search-right"><div class="search-wrap"><input type="text" id="memberSearch" placeholder="Search Here…" oninput="liveSearch()"><button>🔍</button></div></div>
-      </div>
-      <div class="filter-panel" id="memberFilter">
-        <div class="filter-row">
-          <div class="filter-group"><label>Register Date (From)</label><input type="date" class="form-control" id="fDateFrom"></div>
-          <div class="filter-group"><label>Register Date (To)</label><input type="date" class="form-control" id="fDateTo"></div>
-          <div class="filter-group"><label>Member Name / ID / Keyfob</label><input type="text" class="form-control" id="fMember" placeholder="Search member…"></div>
-          <div class="filter-group"><label>Status</label><select class="form-control" id="fStatus"><option value="">All Status</option><option>ACTIVE</option><option>DEFAULTED</option><option>EXPIRED</option><option>FREEZE</option></select></div>
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50">
+      <div class="p-4 lg:p-6 space-y-5">
+
+        <!-- Summary Stat Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" id="statCards"></div>
+
+        <!-- Toolbar -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <!-- Kiri: title + actions -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-base font-bold text-gray-900 mr-1">Members</h2>
+              <span id="totalBadge" class="text-xs font-semibold bg-gray-100 text-gray-600 px-2.5 py-0.5 rounded-full">0</span>
+              <div class="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
+              <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors" onclick="exportCSV('membersTable','members_export.csv')">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>Export
+              </button>
+              <button id="filterToggleBtn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors" onclick="toggleMemberFilter()">
+                <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>Filter
+              </button>
+              <label class="inline-flex items-center gap-2 cursor-pointer ml-1">
+                <span class="text-xs font-medium text-gray-500">Lite</span>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="liteToggle" onchange="toggleLite(this)">
+                  <span class="toggle-slider"></span>
+                </div>
+              </label>
+            </div>
+            <!-- Kanan: search -->
+            <div class="sm:ml-auto relative w-full sm:w-64">
+              <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input type="text" id="memberSearch" placeholder="Search members..." oninput="liveSearch()" class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none transition-all">
+            </div>
+          </div>
+
+          <!-- Filter Panel (collapsible) -->
+          <div class="filter-container" id="memberFilter">
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Register From</label>
+                  <input type="date" id="fDateFrom" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none bg-white">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Register To</label>
+                  <input type="date" id="fDateTo" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none bg-white">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Name / ID</label>
+                  <input type="text" id="fMember" placeholder="Search..." class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none bg-white">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Status</label>
+                  <select id="fStatus" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none bg-white">
+                    <option value="">All Status</option>
+                    <option>ACTIVE</option><option>DEFAULTED</option><option>EXPIRED</option><option>FREEZE</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flex justify-end gap-2 mt-3">
+                <button class="px-4 py-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" onclick="resetFilter()">Reset</button>
+                <button class="px-4 py-1.5 text-xs font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors" onclick="applyFilter()">Apply Filter</button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="filter-actions"><button class="btn btn-gray btn-sm" onclick="resetFilter()">↺ RESET</button><button class="btn btn-purple btn-sm" onclick="applyFilter()">⚙ FILTER</button></div>
+
+        <!-- Table Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm" id="membersTable">
+              <thead>
+                <tr class="bg-slate-50 border-b border-gray-200">
+                  <th class="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
+                  <th class="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    ID <button class="text-gray-400 hover:text-gray-600 ml-0.5" onclick="sortTable('membersTable',1,this)">&#x25BC;</button>
+                  </th>
+                  <th class="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    Member <button class="text-gray-400 hover:text-gray-600 ml-0.5" onclick="sortTable('membersTable',2,this)">&#x25BC;</button>
+                  </th>
+                  <th class="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                  <th class="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">KeyFob</th>
+                  <th class="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Register</th>
+                  <th class="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider" id="billInfoHeader">Bill Info</th>
+                  <th class="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-4 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-16"></th>
+                </tr>
+              </thead>
+              <tbody id="membersBody" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div class="flex flex-col sm:flex-row items-center justify-between px-4 py-3 border-t border-gray-100 gap-2">
+            <p class="text-xs text-gray-500">Showing <span id="showRange">0</span> of <span id="membersTable-count">0</span> members</p>
+            <div class="flex items-center gap-1" id="pagination"></div>
+          </div>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="data-table" id="membersTable">
-          <thead><tr><th style="width:50px;">No.</th><th>Id <button class="sort-btn" onclick="sortTable('membersTable',1,this)">▼</button></th><th>Member Name <button class="sort-btn" onclick="sortTable('membersTable',2,this)">▼</button></th><th>Email</th><th>KeyFob</th><th>Register</th><th id="billInfoHeader">Bill Info</th><th>Status</th><th style="width:80px;">Action</th></tr></thead>
-          <tbody id="membersBody"></tbody>
-        </table>
-      </div>
-      <div class="table-footer">Total: Row (<span id="membersTable-count">0</span>)<div class="pagination" id="pagination"></div></div>
     </main>
   </div>
 </div>
 
-<div class="modal-overlay hidden" id="memberModal"><div class="modal-box"><div class="modal-title">Member Detail</div><div class="modal-grid" id="memberModalContent"></div><div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('memberModal')">Close</button></div></div></div>
+<!-- Slide-over Member Detail Panel -->
+<div id="memberOverlay" class="slide-overlay fixed inset-0 bg-black/40 z-[998]" onclick="closeMemberPanel()"></div>
+<div id="memberPanel" class="slide-panel fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-[999] shadow-2xl flex flex-col">
+  <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Member Detail</h3>
+    <button onclick="closeMemberPanel()" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+      <i data-lucide="x" class="w-5 h-5 text-gray-400"></i>
+    </button>
+  </div>
+  <div class="flex-1 overflow-y-auto p-6" id="memberPanelContent"></div>
+  <div class="px-6 py-4 border-t border-gray-100">
+    <button onclick="closeMemberPanel()" class="w-full py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">Close</button>
+  </div>
+</div>
+
 <script src="script.js"></script>
 <script>
-const MEMBERS = [{id:'M001', name:'Andi Saputra', email:'andi@email.com', keyfob:'KF-001', register:'2024-01-15', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M002', name:'Budi Santoso', email:'budi@email.com', keyfob:'KF-002', register:'2024-02-20', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M003', name:'Citra Dewi', email:'citra@email.com', keyfob:'KF-003', register:'2024-03-10', bill:'IDR 450,000', status:'FREEZE'}, {id:'M004', name:'Dian Rahayu', email:'dian@email.com', keyfob:'KF-004', register:'2024-03-22', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M005', name:'Eko Prasetyo', email:'eko@email.com', keyfob:'KF-005', register:'2024-04-05', bill:'IDR 200,000', status:'EXPIRED'}, {id:'M006', name:'Fajar Nugroho', email:'fajar@email.com', keyfob:'KF-006', register:'2024-04-18', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M007', name:'Gita Lestari', email:'gita@email.com', keyfob:'KF-007', register:'2024-05-01', bill:'IDR 450,000', status:'DEFAULTED'}, {id:'M008', name:'Hendra Wijaya', email:'hendra@email.com', keyfob:'KF-008', register:'2024-05-14', bill:'IDR 350,000', status:'ACTIVE'}, {id:'M009', name:'Indah Pertiwi', email:'indah@email.com', keyfob:'KF-009', register:'2024-06-02', bill:'IDR 200,000', status:'ACTIVE'}, {id:'M010', name:'Joko Susanto', email:'joko@email.com', keyfob:'KF-010', register:'2024-06-19', bill:'IDR 350,000', status:'EXPIRED'}, {id:'M011', name:'Kartika Sari', email:'kartika@email.com', keyfob:'KF-011', register:'2024-07-07', bill:'IDR 450,000', status:'ACTIVE'}, {id:'M012', name:'Lutfi Hakim', email:'lutfi@email.com', keyfob:'KF-012', register:'2024-07-23', bill:'IDR 350,000', status:'FREEZE'}];
-let filteredData = [...MEMBERS]; let liteMode = false; const PAGE_SIZE = 8; let currentPage = 1;
-function statusBadge(s) { const map = {ACTIVE:'badge-active',EXPIRED:'badge-expired',FREEZE:'badge-freeze',DEFAULTED:'badge-defaulted'}; return `<span class="badge ${map[s]||''}">${s}</span>`; }
-function renderTable(data, page) { const tbody = document.getElementById('membersBody'); const start = (page-1)*PAGE_SIZE; const slice = data.slice(start, start+PAGE_SIZE); tbody.innerHTML = slice.map((m, i) => `<tr><td>${start+i+1}.</td><td>${m.id}</td><td>${m.name}</td><td>${m.email}</td><td>${m.keyfob}</td><td>${m.register}</td>${liteMode ? '' : `<td>${m.bill}</td>`}<td>${statusBadge(m.status)}</td><td><button class="btn btn-gray btn-sm" onclick='showMember(${JSON.stringify(m)})'>View</button></td></tr>`).join(''); document.getElementById('membersTable-count').textContent = data.length; renderPagination(data.length, page); }
-function renderPagination(total, page) { const pages = Math.ceil(total/PAGE_SIZE); const pg = document.getElementById('pagination'); if (pages <= 1) { pg.innerHTML = ''; return; } let html = `<button class="pg-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`; for (let i=1;i<=pages;i++) html += `<button class="pg-btn ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`; html += `<button class="pg-btn" onclick="goPage(${page+1})" ${page===pages?'disabled':''}>›</button>`; pg.innerHTML = html; }
-function goPage(p) { const pages = Math.ceil(filteredData.length/PAGE_SIZE); currentPage = Math.max(1, Math.min(p, pages)); renderTable(filteredData, currentPage); }
-function liveSearch() { const q = document.getElementById('memberSearch').value.toLowerCase(); filteredData = MEMBERS.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.keyfob.toLowerCase().includes(q)); currentPage = 1; renderTable(filteredData, currentPage); }
-function applyFilter() { const from = document.getElementById('fDateFrom').value; const to = document.getElementById('fDateTo').value; const member = document.getElementById('fMember').value.toLowerCase(); const status = document.getElementById('fStatus').value; filteredData = MEMBERS.filter(m => { if (from && m.register < from) return false; if (to && m.register > to) return false; if (member && !m.name.toLowerCase().includes(member) && !m.id.toLowerCase().includes(member)) return false; if (status && m.status !== status) return false; return true; }); currentPage = 1; renderTable(filteredData, currentPage); document.getElementById('memberFilter').classList.remove('open'); }
-function resetFilter() { ['fDateFrom','fDateTo','fMember'].forEach(id => document.getElementById(id).value=''); document.getElementById('fStatus').value=''; filteredData = [...MEMBERS]; currentPage = 1; renderTable(filteredData, currentPage); }
-function toggleLite(cb) { liteMode = cb.checked; document.getElementById('billInfoHeader').style.display = liteMode ? 'none' : ''; renderTable(filteredData, currentPage); }
-function showMember(m) { document.getElementById('memberModalContent').innerHTML = `<div class="form-group"><label>Member ID</label><div style="font-weight:600">${m.id}</div></div><div class="form-group"><label>Full Name</label><div>${m.name}</div></div><div class="form-group"><label>Email</label><div>${m.email}</div></div><div class="form-group"><label>KeyFob</label><div>${m.keyfob}</div></div><div class="form-group"><label>Register Date</label><div>${m.register}</div></div><div class="form-group"><label>Bill Info</label><div>${m.bill}</div></div><div class="form-group"><label>Status</label><div>${statusBadge(m.status)}</div></div>`; openModal('memberModal'); }
+const MEMBERS = [
+  {id:'M001', name:'Andi Saputra', email:'andi@email.com', keyfob:'KF-001', register:'2024-01-15', bill:'IDR 350,000', status:'ACTIVE'},
+  {id:'M002', name:'Budi Santoso', email:'budi@email.com', keyfob:'KF-002', register:'2024-02-20', bill:'IDR 350,000', status:'ACTIVE'},
+  {id:'M003', name:'Citra Dewi', email:'citra@email.com', keyfob:'KF-003', register:'2024-03-10', bill:'IDR 450,000', status:'FREEZE'},
+  {id:'M004', name:'Dian Rahayu', email:'dian@email.com', keyfob:'KF-004', register:'2024-03-22', bill:'IDR 350,000', status:'ACTIVE'},
+  {id:'M005', name:'Eko Prasetyo', email:'eko@email.com', keyfob:'KF-005', register:'2024-04-05', bill:'IDR 200,000', status:'EXPIRED'},
+  {id:'M006', name:'Fajar Nugroho', email:'fajar@email.com', keyfob:'KF-006', register:'2024-04-18', bill:'IDR 350,000', status:'ACTIVE'},
+  {id:'M007', name:'Gita Lestari', email:'gita@email.com', keyfob:'KF-007', register:'2024-05-01', bill:'IDR 450,000', status:'DEFAULTED'},
+  {id:'M008', name:'Hendra Wijaya', email:'hendra@email.com', keyfob:'KF-008', register:'2024-05-14', bill:'IDR 350,000', status:'ACTIVE'},
+  {id:'M009', name:'Indah Pertiwi', email:'indah@email.com', keyfob:'KF-009', register:'2024-06-02', bill:'IDR 200,000', status:'ACTIVE'},
+  {id:'M010', name:'Joko Susanto', email:'joko@email.com', keyfob:'KF-010', register:'2024-06-19', bill:'IDR 350,000', status:'EXPIRED'},
+  {id:'M011', name:'Kartika Sari', email:'kartika@email.com', keyfob:'KF-011', register:'2024-07-07', bill:'IDR 450,000', status:'ACTIVE'},
+  {id:'M012', name:'Lutfi Hakim', email:'lutfi@email.com', keyfob:'KF-012', register:'2024-07-23', bill:'IDR 350,000', status:'FREEZE'},
+];
+
+let filteredData = [...MEMBERS];
+let liteMode = false;
+const PAGE_SIZE = 8;
+let currentPage = 1;
+
+// Warna avatar berdasarkan nama
+const AVATAR_COLORS = [
+  'from-blue-500 to-indigo-500', 'from-emerald-500 to-teal-500', 'from-orange-500 to-red-500',
+  'from-violet-500 to-purple-500', 'from-pink-500 to-rose-500', 'from-cyan-500 to-blue-500',
+  'from-amber-500 to-orange-500', 'from-lime-500 to-green-500',
+];
+
+function getAvatarColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function getInitials(name) {
+  return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+}
+
+// Status badge Tailwind
+function statusBadge(s) {
+  const map = {
+    ACTIVE:    'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+    EXPIRED:   'bg-orange-50 text-orange-700 ring-orange-600/20',
+    FREEZE:    'bg-sky-50 text-sky-700 ring-sky-600/20',
+    DEFAULTED: 'bg-red-50 text-red-700 ring-red-600/20',
+  };
+  return `<span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-full ring-1 ring-inset ${map[s] || ''}">${s}</span>`;
+}
+
+// Stat cards
+function renderStatCards() {
+  const total = MEMBERS.length;
+  const active = MEMBERS.filter(m => m.status === 'ACTIVE').length;
+  const problem = MEMBERS.filter(m => m.status === 'DEFAULTED' || m.status === 'EXPIRED').length;
+  const freeze = MEMBERS.filter(m => m.status === 'FREEZE').length;
+
+  const cards = [
+    { label: 'Total Members', value: total, icon: 'users', color: 'text-slate-700', bg: 'bg-slate-100' },
+    { label: 'Active', value: active, icon: 'user-check', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Defaulted / Expired', value: problem, icon: 'user-x', color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'Freeze', value: freeze, icon: 'snowflake', color: 'text-sky-600', bg: 'bg-sky-50' },
+  ];
+
+  document.getElementById('statCards').innerHTML = cards.map(c => `
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+      <div class="w-10 h-10 ${c.bg} rounded-lg flex items-center justify-center flex-shrink-0">
+        <i data-lucide="${c.icon}" class="w-5 h-5 ${c.color}"></i>
+      </div>
+      <div>
+        <p class="text-2xl font-bold ${c.color}">${c.value}</p>
+        <p class="text-[11px] text-gray-500 font-medium">${c.label}</p>
+      </div>
+    </div>
+  `).join('');
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Render tabel
+function renderTable(data, page) {
+  const tbody = document.getElementById('membersBody');
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = data.slice(start, start + PAGE_SIZE);
+
+  tbody.innerHTML = slice.map((m, i) => {
+    const initials = getInitials(m.name);
+    const gradient = getAvatarColor(m.name);
+    return `
+      <tr class="hover:bg-gray-50/80 transition-colors cursor-pointer" onclick='showMember(${JSON.stringify(m)})'>
+        <td class="px-4 py-3 text-gray-400 text-xs">${start + i + 1}</td>
+        <td class="px-4 py-3 font-mono text-xs text-gray-500">${m.id}</td>
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0">
+              <span class="text-[10px] font-bold text-white">${initials}</span>
+            </div>
+            <span class="font-semibold text-gray-900 text-sm">${m.name}</span>
+          </div>
+        </td>
+        <td class="px-4 py-3 text-gray-500 text-xs">${m.email}</td>
+        <td class="px-4 py-3 font-mono text-xs text-gray-500">${m.keyfob}</td>
+        <td class="px-4 py-3 text-gray-500 text-xs">${m.register}</td>
+        ${liteMode ? '' : `<td class="px-4 py-3 font-mono text-xs font-semibold text-gray-700">${m.bill}</td>`}
+        <td class="px-4 py-3">${statusBadge(m.status)}</td>
+        <td class="px-4 py-3 text-center">
+          <button class="p-1.5 rounded-lg hover:bg-violet-50 text-gray-400 hover:text-violet-600 transition-colors" onclick="event.stopPropagation(); showMember(${JSON.stringify(m)})" title="View detail">
+            <i data-lucide="eye" class="w-4 h-4"></i>
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('membersTable-count').textContent = data.length;
+  const endIdx = Math.min(start + PAGE_SIZE, data.length);
+  document.getElementById('showRange').textContent = data.length > 0 ? `${start + 1}-${endIdx}` : '0';
+  document.getElementById('totalBadge').textContent = data.length;
+  renderPagination(data.length, page);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Pagination modern
+function renderPagination(total, page) {
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const pg = document.getElementById('pagination');
+  if (pages <= 1) { pg.innerHTML = ''; return; }
+
+  let html = `<button class="w-8 h-8 flex items-center justify-center rounded-lg text-xs text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" onclick="goPage(${page - 1})" ${page === 1 ? 'disabled' : ''}><i data-lucide="chevron-left" class="w-4 h-4"></i></button>`;
+  for (let i = 1; i <= pages; i++) {
+    const isActive = i === page;
+    html += `<button class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors ${isActive ? 'bg-violet-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'}" onclick="goPage(${i})">${i}</button>`;
+  }
+  html += `<button class="w-8 h-8 flex items-center justify-center rounded-lg text-xs text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" onclick="goPage(${page + 1})" ${page === pages ? 'disabled' : ''}><i data-lucide="chevron-right" class="w-4 h-4"></i></button>`;
+  pg.innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function goPage(p) {
+  const pages = Math.ceil(filteredData.length / PAGE_SIZE);
+  currentPage = Math.max(1, Math.min(p, pages));
+  renderTable(filteredData, currentPage);
+}
+
+// Search & filter
+function liveSearch() {
+  const q = document.getElementById('memberSearch').value.toLowerCase();
+  filteredData = MEMBERS.filter(m =>
+    m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q) ||
+    m.email.toLowerCase().includes(q) || m.keyfob.toLowerCase().includes(q)
+  );
+  currentPage = 1;
+  renderTable(filteredData, currentPage);
+}
+
+function toggleMemberFilter() {
+  const panel = document.getElementById('memberFilter');
+  const btn = document.getElementById('filterToggleBtn');
+  panel.classList.toggle('open');
+  btn.classList.toggle('bg-violet-50');
+  btn.classList.toggle('text-violet-600');
+  btn.classList.toggle('border-violet-200');
+}
+
+function applyFilter() {
+  const from = document.getElementById('fDateFrom').value;
+  const to = document.getElementById('fDateTo').value;
+  const member = document.getElementById('fMember').value.toLowerCase();
+  const status = document.getElementById('fStatus').value;
+  filteredData = MEMBERS.filter(m => {
+    if (from && m.register < from) return false;
+    if (to && m.register > to) return false;
+    if (member && !m.name.toLowerCase().includes(member) && !m.id.toLowerCase().includes(member)) return false;
+    if (status && m.status !== status) return false;
+    return true;
+  });
+  currentPage = 1;
+  renderTable(filteredData, currentPage);
+  document.getElementById('memberFilter').classList.remove('open');
+}
+
+function resetFilter() {
+  ['fDateFrom', 'fDateTo', 'fMember'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fStatus').value = '';
+  filteredData = [...MEMBERS];
+  currentPage = 1;
+  renderTable(filteredData, currentPage);
+}
+
+function toggleLite(cb) {
+  liteMode = cb.checked;
+  document.getElementById('billInfoHeader').style.display = liteMode ? 'none' : '';
+  renderTable(filteredData, currentPage);
+}
+
+// Slide-over member detail
+function showMember(m) {
+  const initials = getInitials(m.name);
+  const gradient = getAvatarColor(m.name);
+  const statusColor = { ACTIVE: 'bg-emerald-500', EXPIRED: 'bg-orange-500', FREEZE: 'bg-sky-500', DEFAULTED: 'bg-red-500' };
+
+  document.getElementById('memberPanelContent').innerHTML = `
+    <!-- Header profile -->
+    <div class="text-center mb-6">
+      <div class="w-20 h-20 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mx-auto shadow-lg">
+        <span class="text-2xl font-bold text-white">${initials}</span>
+      </div>
+      <h2 class="text-lg font-bold text-gray-900 mt-4">${m.name}</h2>
+      <p class="text-sm text-gray-500 mt-0.5">${m.email}</p>
+      <div class="mt-3">${statusBadge(m.status)}</div>
+    </div>
+
+    <!-- Info cards -->
+    <div class="space-y-3">
+      <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        <div class="w-9 h-9 bg-white rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+          <i data-lucide="hash" class="w-4 h-4 text-violet-500"></i>
+        </div>
+        <div><p class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Member ID</p><p class="text-sm font-bold text-gray-900">${m.id}</p></div>
+      </div>
+      <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        <div class="w-9 h-9 bg-white rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+          <i data-lucide="mail" class="w-4 h-4 text-blue-500"></i>
+        </div>
+        <div><p class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Email</p><p class="text-sm font-bold text-gray-900">${m.email}</p></div>
+      </div>
+      <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        <div class="w-9 h-9 bg-white rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+          <i data-lucide="credit-card" class="w-4 h-4 text-emerald-500"></i>
+        </div>
+        <div><p class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">KeyFob</p><p class="text-sm font-bold font-mono text-gray-900">${m.keyfob}</p></div>
+      </div>
+      <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        <div class="w-9 h-9 bg-white rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+          <i data-lucide="calendar" class="w-4 h-4 text-orange-500"></i>
+        </div>
+        <div><p class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Register Date</p><p class="text-sm font-bold text-gray-900">${m.register}</p></div>
+      </div>
+      <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        <div class="w-9 h-9 bg-white rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+          <i data-lucide="receipt" class="w-4 h-4 text-pink-500"></i>
+        </div>
+        <div><p class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Bill Info</p><p class="text-sm font-bold font-mono text-gray-900">${m.bill}</p></div>
+      </div>
+      <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        <div class="w-9 h-9 bg-white rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+          <div class="w-2.5 h-2.5 rounded-full ${statusColor[m.status] || 'bg-gray-400'}"></div>
+        </div>
+        <div><p class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Status</p><p class="text-sm font-bold text-gray-900">${m.status}</p></div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('memberOverlay').classList.add('open');
+  document.getElementById('memberPanel').classList.add('open');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeMemberPanel() {
+  document.getElementById('memberOverlay').classList.remove('open');
+  document.getElementById('memberPanel').classList.remove('open');
+}
+
+// Init
+renderStatCards();
 renderTable(MEMBERS, 1);
 </script>
 </body>
