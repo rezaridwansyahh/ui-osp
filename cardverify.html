@@ -21,29 +21,30 @@ tailwind.config = {
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
-.cv-content { padding: 16px; }
-.cv-top-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
-.upload-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 48px 24px; text-align: center; cursor: pointer; transition: border-color 0.18s, background 0.18s; background: var(--gray-100); margin-top: 10px; }
-.upload-zone:hover, .upload-zone.drag-over { border-color: var(--purple); background: rgba(125,60,152,0.04); }
-.upload-zone .icon { font-size: 40px; margin-bottom: 10px; }
-.upload-zone .label { font-size: 15px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }
-.upload-zone .sublabel { font-size: 12px; color: var(--gray-500); }
-.upload-zone input[type=file] { display: none; }
-.file-preview { display: none; margin-top: 16px; background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.file-preview.visible { display: flex; }
-.file-info { display: flex; align-items: center; gap: 10px; }
-.file-icon { font-size: 24px; }
-.file-name { font-weight: 600; font-size: 13px; }
-.file-size { font-size: 11px; color: var(--gray-500); }
-.file-remove { background: none; border: none; color: var(--red); font-size: 18px; cursor: pointer; }
-.submit-row { margin-top: 20px; display: flex; gap: 10px; }
-.template-hint { margin-top: 14px; font-size: 12px; color: var(--gray-500); background: var(--gray-100); border-radius: 4px; padding: 8px 12px; border-left: 3px solid var(--purple); }
+/* Upload zone drag state */
+.upload-area { transition: border-color 0.2s, background 0.2s; }
+.upload-area.drag-over { border-color: #7c3aed !important; background: rgba(124,58,237,0.04) !important; }
+
+/* File preview slide-in */
+.file-card { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease; margin-top: 0; }
+.file-card.visible { max-height: 120px; opacity: 1; margin-top: 16px; }
+
+/* Progress bar animation */
+@keyframes progressFill { from { width: 0; } to { width: 100%; } }
+.progress-fill { animation: progressFill 0.8s ease-out forwards; }
+
+/* Confirmation modal */
+.confirm-overlay { opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+.confirm-overlay.open { opacity: 1; pointer-events: auto; }
+.confirm-box { transform: scale(0.95) translateY(8px); transition: transform 0.2s ease; }
+.confirm-overlay.open .confirm-box { transform: scale(1) translateY(0); }
 </style>
 </head>
 <body class="font-sans bg-gray-50 h-screen overflow-hidden">
 <div class="flex h-screen">
   <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleSidebar()"></div>
 
+  <!-- Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-800 z-50 transform -translate-x-full lg:translate-x-0 lg:static lg:z-auto transition-transform duration-300 ease-in-out flex flex-col flex-shrink-0">
     <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-700 flex-shrink-0">
       <img src="assets/logo osp.png" alt="Logo OSP" class="h-8 w-auto">
@@ -101,6 +102,7 @@ tailwind.config = {
   </aside>
 
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <!-- Navbar -->
     <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 shadow-sm">
       <div class="flex items-center gap-3">
         <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors">
@@ -120,50 +122,255 @@ tailwind.config = {
       </div>
     </header>
 
-    <main class="main">
-      <div class="action-bar">
-        <button class="btn btn-gray" onclick="downloadTemplate()">⬇ DOWNLOAD FORMAT TEMPLATE</button>
-      </div>
-      <div class="cv-content">
-        <div class="cv-top-bar"><h2 style="font-size:15px;font-weight:700;color:var(--gray-900);">Upload Card Verify File</h2></div>
-        <div class="template-hint">Please download the format template first, fill it in, then upload the completed file below.</div>
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
-          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files)">
-          <div class="icon">📂</div>
-          <div class="label">Click to choose a file, or drag &amp; drop here</div>
-          <div class="sublabel">Accepted formats: .xlsx, .xls, .csv</div>
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50">
+      <div class="p-4 lg:p-6 space-y-5">
+
+        <!-- Step Indicator -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center justify-between">
+            <!-- Step 1 -->
+            <div class="flex items-center gap-2.5" id="step1">
+              <div class="w-9 h-9 rounded-full bg-violet-600 text-white flex items-center justify-center flex-shrink-0 transition-colors" id="step1Circle">
+                <i data-lucide="download" class="w-4 h-4"></i>
+              </div>
+              <div class="hidden sm:block">
+                <p class="text-xs font-semibold text-violet-600 transition-colors" id="step1Label">Step 1</p>
+                <p class="text-[11px] text-gray-500">Download Template</p>
+              </div>
+            </div>
+            <!-- Connector -->
+            <div class="flex-1 mx-3 h-0.5 bg-gray-200 rounded-full relative">
+              <div class="absolute inset-y-0 left-0 bg-violet-600 rounded-full transition-all duration-500" id="connector1" style="width:0%"></div>
+            </div>
+            <!-- Step 2 -->
+            <div class="flex items-center gap-2.5" id="step2">
+              <div class="w-9 h-9 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0 transition-colors" id="step2Circle">
+                <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+              </div>
+              <div class="hidden sm:block">
+                <p class="text-xs font-semibold text-gray-400 transition-colors" id="step2Label">Step 2</p>
+                <p class="text-[11px] text-gray-500">Upload File</p>
+              </div>
+            </div>
+            <!-- Connector -->
+            <div class="flex-1 mx-3 h-0.5 bg-gray-200 rounded-full relative">
+              <div class="absolute inset-y-0 left-0 bg-violet-600 rounded-full transition-all duration-500" id="connector2" style="width:0%"></div>
+            </div>
+            <!-- Step 3 -->
+            <div class="flex items-center gap-2.5" id="step3">
+              <div class="w-9 h-9 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0 transition-colors" id="step3Circle">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+              </div>
+              <div class="hidden sm:block">
+                <p class="text-xs font-semibold text-gray-400 transition-colors" id="step3Label">Step 3</p>
+                <p class="text-[11px] text-gray-500">Submit</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="file-preview" id="filePreview">
-          <div class="file-info"><span class="file-icon">📄</span><div><div class="file-name" id="fileName">–</div><div class="file-size" id="fileSize">–</div></div></div>
-          <button class="file-remove" onclick="removeFile()" title="Remove">✕</button>
+
+        <!-- Download Template Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <i data-lucide="file-spreadsheet" class="w-6 h-6 text-emerald-600"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-bold text-gray-900">Download Format Template</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Download template CSV terlebih dahulu, isi datanya, lalu upload file yang sudah lengkap.</p>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <span class="text-[10px] font-mono font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">MemberID</span>
+                <span class="text-[10px] font-mono font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">CardNumber</span>
+                <span class="text-[10px] font-mono font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">IssueDate</span>
+                <span class="text-[10px] font-mono font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">ExpiryDate</span>
+              </div>
+            </div>
+            <button onclick="downloadTemplate()" class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex-shrink-0 shadow-sm">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              Download Template
+            </button>
+          </div>
         </div>
-        <div class="submit-row">
-          <button class="btn btn-purple" onclick="submitFile()">✔ SUBMIT</button>
-          <button class="btn btn-gray" onclick="removeFile()">✕ CLEAR</button>
+
+        <!-- Upload Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h3 class="text-sm font-bold text-gray-900 mb-4">Upload Card Verify File</h3>
+
+          <!-- Upload Zone -->
+          <div class="upload-area border-2 border-dashed border-gray-200 rounded-xl p-8 sm:p-12 text-center cursor-pointer hover:border-violet-300 hover:bg-violet-50/30"
+               id="uploadZone"
+               onclick="document.getElementById('fileInput').click()"
+               ondragover="event.preventDefault(); this.classList.add('drag-over')"
+               ondragleave="this.classList.remove('drag-over')"
+               ondrop="handleDrop(event)">
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files)" class="hidden">
+            <div class="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="upload-cloud" class="w-7 h-7 text-violet-500"></i>
+            </div>
+            <p class="text-sm font-semibold text-gray-700">Click to choose a file, or drag &amp; drop here</p>
+            <p class="text-xs text-gray-400 mt-1.5 mb-3">Maximum file size: 10MB</p>
+            <div class="flex justify-center gap-2">
+              <span class="text-[11px] font-semibold text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full">.xlsx</span>
+              <span class="text-[11px] font-semibold text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full">.xls</span>
+              <span class="text-[11px] font-semibold text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full">.csv</span>
+            </div>
+          </div>
+
+          <!-- File Preview Card (hidden by default) -->
+          <div class="file-card" id="filePreview">
+            <div class="flex items-center gap-3 p-3.5 bg-gray-50 rounded-xl border border-gray-100">
+              <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-600"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-semibold text-gray-900 truncate" id="fileName">-</p>
+                  <span class="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                    <i data-lucide="check" class="w-3 h-3"></i>Ready
+                  </span>
+                </div>
+                <p class="text-xs text-gray-400 mt-0.5" id="fileSize">-</p>
+                <div class="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-emerald-500 rounded-full progress-fill"></div>
+                </div>
+              </div>
+              <button onclick="event.stopPropagation(); removeFile()" class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0" title="Remove file">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-3 mt-5">
+            <button id="submitBtn" onclick="submitFile()" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-violet-600" disabled>
+              <i data-lucide="send" class="w-4 h-4"></i>
+              Submit File
+            </button>
+            <button id="clearBtn" onclick="removeFile()" class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              Clear
+            </button>
+          </div>
         </div>
+
+
       </div>
     </main>
   </div>
 </div>
 
-<div class="modal-overlay hidden" id="confirmModal">
-  <div class="modal-box">
-    <div class="modal-title">Confirm Submission</div>
-    <p style="font-size:13px;color:var(--gray-700);">Are you sure you want to submit this file for card verification?</p>
-    <div id="confirmFileName" style="margin-top:10px;font-weight:600;font-size:13px;"></div>
-    <div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('confirmModal')">Cancel</button><button class="btn btn-purple" onclick="confirmSubmit()">Submit</button></div>
+<!-- Confirmation Modal -->
+<div class="confirm-overlay fixed inset-0 bg-black/40 z-[999] flex items-center justify-center p-4" id="confirmModal">
+  <div class="confirm-box bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+    <div class="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <i data-lucide="file-check" class="w-7 h-7 text-violet-600"></i>
+    </div>
+    <h3 class="text-base font-bold text-gray-900">Confirm Submission</h3>
+    <p class="text-sm text-gray-500 mt-1.5">Are you sure you want to submit this file for card verification?</p>
+    <div class="mt-4 p-3 bg-gray-50 rounded-xl flex items-center gap-2.5 justify-center" id="confirmFileInfo">
+      <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+      <span class="text-sm font-semibold text-gray-800 truncate" id="confirmFileName">-</span>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button onclick="closeConfirmModal()" class="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
+      <button onclick="confirmSubmit()" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 rounded-xl hover:bg-violet-700 transition-colors shadow-sm">Submit</button>
+    </div>
   </div>
 </div>
+
 <script src="script.js"></script>
 <script>
 let selectedFile = null;
-function handleFile(files) { if (!files || !files[0]) return; selectedFile = files[0]; document.getElementById('fileName').textContent = selectedFile.name; document.getElementById('fileSize').textContent = formatBytes(selectedFile.size); document.getElementById('filePreview').classList.add('visible'); }
-function handleDrop(e) { e.preventDefault(); document.getElementById('uploadZone').classList.remove('drag-over'); handleFile(e.dataTransfer.files); }
-function removeFile() { selectedFile = null; document.getElementById('fileInput').value = ''; document.getElementById('filePreview').classList.remove('visible'); }
-function submitFile() { if (!selectedFile) { showToast('Please choose a file first.', 'error'); return; } document.getElementById('confirmFileName').textContent = '📄 ' + selectedFile.name; openModal('confirmModal'); }
-function confirmSubmit() { closeModal('confirmModal'); showToast('File submitted successfully!', 'success'); removeFile(); }
-function downloadTemplate() { const csv = '"MemberID","CardNumber","IssueDate","ExpiryDate"\n"","","",""\n'; const blob = new Blob([csv], {type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'card_verify_template.csv'; a.click(); showToast('Template downloaded.', 'success'); }
-function formatBytes(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
+
+// Step indicator
+function updateSteps(step) {
+  const colors = { active: 'bg-violet-600 text-white', done: 'bg-emerald-500 text-white', inactive: 'bg-gray-200 text-gray-400' };
+  const labelColors = { active: 'text-violet-600', done: 'text-emerald-600', inactive: 'text-gray-400' };
+
+  [1, 2, 3].forEach(i => {
+    const circle = document.getElementById('step' + i + 'Circle');
+    const label = document.getElementById('step' + i + 'Label');
+    // Hapus semua class warna
+    circle.className = circle.className.replace(/bg-\S+|text-\S+/g, '').trim();
+    label.className = label.className.replace(/text-\S+/g, '').trim();
+
+    let state = 'inactive';
+    if (i < step) state = 'done';
+    else if (i === step) state = 'active';
+
+    circle.classList.add(...colors[state].split(' '),
+      'w-9', 'h-9', 'rounded-full', 'flex', 'items-center', 'justify-center', 'flex-shrink-0', 'transition-colors');
+    label.classList.add(labelColors[state], 'text-xs', 'font-semibold', 'transition-colors');
+  });
+
+  // Connector progress
+  document.getElementById('connector1').style.width = step > 1 ? '100%' : '0%';
+  document.getElementById('connector2').style.width = step > 2 ? '100%' : '0%';
+}
+
+function handleFile(files) {
+  if (!files || !files[0]) return;
+  selectedFile = files[0];
+  document.getElementById('fileName').textContent = selectedFile.name;
+  document.getElementById('fileSize').textContent = formatBytes(selectedFile.size);
+  document.getElementById('filePreview').classList.add('visible');
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('clearBtn').disabled = false;
+  updateSteps(2);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  handleFile(e.dataTransfer.files);
+}
+
+function removeFile() {
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('filePreview').classList.remove('visible');
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('clearBtn').disabled = true;
+  updateSteps(1);
+}
+
+function submitFile() {
+  if (!selectedFile) { showToast('Please choose a file first.', 'error'); return; }
+  document.getElementById('confirmFileName').textContent = selectedFile.name;
+  document.getElementById('confirmModal').classList.add('open');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModal').classList.remove('open');
+}
+
+function confirmSubmit() {
+  closeConfirmModal();
+  updateSteps(3);
+  showToast('File submitted successfully!', 'success');
+  setTimeout(() => { removeFile(); }, 1500);
+}
+
+function downloadTemplate() {
+  const csv = '"MemberID","CardNumber","IssueDate","ExpiryDate"\n"","","",""\n';
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'card_verify_template.csv';
+  a.click();
+  showToast('Template downloaded.', 'success');
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(1) + ' MB';
+}
+
+// Init
+updateSteps(1);
 </script>
 </body>
 </html>
