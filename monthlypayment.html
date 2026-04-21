@@ -21,37 +21,23 @@ tailwind.config = {
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
-.mp-filters { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--gray-100); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-.mp-filters label { font-size: 13px; font-weight: 600; white-space: nowrap; }
-.member-search-bar { display: flex; align-items: center; gap: 0; flex: 1; max-width: 500px; }
-.member-search-bar input { flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-right: none; border-radius: 3px 0 0 3px; outline: none; font-family: var(--font); font-size: 13px; }
-.member-search-bar button { padding: 8px 14px; background: var(--gray-300); border: 1px solid var(--border); border-radius: 0 3px 3px 0; cursor: pointer; font-size: 14px; }
-.member-search-bar button:hover { background: var(--gray-500); color: var(--white); }
-.payment-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; margin: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.payment-card-header { background: var(--red); color: var(--white); padding: 12px 18px; font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
-.payment-card-body { padding: 18px; }
-.payment-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 18px; }
-.info-item label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--gray-500); margin-bottom: 3px; letter-spacing: 0.4px; }
-.info-item .val { font-size: 14px; font-weight: 600; color: var(--gray-900); }
-.packages-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); color: var(--gray-700); }
-.package-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--gray-200); gap: 10px; }
-.package-row:last-child { border-bottom: none; }
-.pkg-name { font-weight: 600; font-size: 13px; }
-.pkg-type { font-size: 11px; color: var(--gray-500); }
-.pkg-price { font-family: var(--font-mono); font-weight: 700; color: var(--red); }
-.pkg-select { display: flex; align-items: center; gap: 8px; }
-.total-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: var(--gray-100); border-top: 2px solid var(--border); }
-.total-label { font-size: 14px; font-weight: 700; }
-.total-amount { font-size: 20px; font-weight: 700; font-family: var(--font-mono); color: var(--red); }
-.empty-state { text-align: center; padding: 60px 20px; color: var(--gray-500); }
-.empty-state .icon { font-size: 40px; margin-bottom: 10px; }
-.empty-state p { font-size: 14px; }
+.modal-overlay-mp { opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+.modal-overlay-mp.open { opacity: 1; pointer-events: auto; }
+.modal-box-mp { transform: scale(0.95) translateY(8px); transition: transform 0.2s ease; }
+.modal-overlay-mp.open .modal-box-mp { transform: scale(1) translateY(0); }
+
+/* Button group buat month status */
+.month-btn { transition: all 0.15s; }
+.month-btn.active-collect { background: #ecfdf5; color: #059669; border-color: #6ee7b7; font-weight: 700; }
+.month-btn.active-waived  { background: #fffbeb; color: #d97706; border-color: #fcd34d; font-weight: 700; }
+.month-btn.active-notcol  { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; font-weight: 700; }
 </style>
 </head>
 <body class="font-sans bg-gray-50 h-screen overflow-hidden">
 <div class="flex h-screen">
   <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleSidebar()"></div>
 
+  <!-- Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-800 z-50 transform -translate-x-full lg:translate-x-0 lg:static lg:z-auto transition-transform duration-300 ease-in-out flex flex-col flex-shrink-0">
     <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-700 flex-shrink-0">
       <img src="assets/logo osp.png" alt="Logo OSP" class="h-8 w-auto">
@@ -109,6 +95,7 @@ tailwind.config = {
   </aside>
 
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <!-- Navbar -->
     <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 shadow-sm">
       <div class="flex items-center gap-3">
         <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors">
@@ -128,62 +115,436 @@ tailwind.config = {
       </div>
     </header>
 
-    <main class="main">
-      <div class="mp-filters">
-        <label>Gym</label><select class="form-control" id="gymSelect" onchange="onGymChange()" style="width:200px;"><option>AF Kemang</option><option>AF Senayan</option><option>AF Menteng</option><option>AF Kelapa Gading</option></select>
-        <label>Member</label><div class="member-search-bar"><input type="text" id="memberSearchInput" placeholder="Click button to search member…" readonly onclick="openModal('memberSearchModal')" style="cursor:pointer;"><button onclick="openModal('memberSearchModal')">🔍</button></div>
-        <button class="btn btn-gray btn-sm" onclick="clearMember()">✕ Clear</button>
-      </div>
-      <div id="paymentContent">
-        <div class="empty-state"><div class="icon">💳</div><p>Select a gym and search for a member to view payment details.</p></div>
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50">
+      <div class="p-4 lg:p-6 space-y-5">
+
+        <!-- Toolbar -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="flex items-center gap-3 flex-wrap flex-1">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-violet-600"></i>
+                </div>
+                <select id="gymSelect" onchange="onGymChange()" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none cursor-pointer">
+                  <option>AF Kemang</option><option>AF Senayan</option><option>AF Menteng</option><option>AF Kelapa Gading</option>
+                </select>
+              </div>
+              <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
+              <div class="relative flex-1 min-w-[200px] max-w-md cursor-pointer" onclick="openMemberSearch()">
+                <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input type="text" id="memberSearchInput" placeholder="Search member..." readonly
+                  class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-pointer hover:border-violet-300 transition-colors outline-none">
+              </div>
+            </div>
+            <button onclick="clearMember()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors flex-shrink-0">
+              <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Payment Content -->
+        <div id="paymentContent"></div>
+
       </div>
     </main>
   </div>
 </div>
 
-<div class="modal-overlay hidden" id="memberSearchModal">
-  <div class="modal-box" style="max-width: 800px; width: 90%;">
-    <div style="margin-bottom: 15px; border-bottom: 1px solid #3498db; padding-bottom: 10px;">
-      <input type="text" id="modalMemberSearch" placeholder="Search by member id or member name" style="width: 100%; border: none; outline: none; font-size: 14px;" oninput="searchModalMembers()">
+<!-- Member Search Modal -->
+<div class="modal-overlay-mp fixed inset-0 bg-black/40 z-[999] flex items-center justify-center p-4" id="memberSearchModal">
+  <div class="modal-box-mp bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+    <div class="p-5 border-b border-gray-100">
+      <div class="relative">
+        <i data-lucide="search" class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <input type="text" id="modalMemberSearch" placeholder="Search by member ID or name..." oninput="searchModalMembers()"
+          class="w-full pl-10 pr-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none">
+      </div>
     </div>
-    <table class="data-table" id="modalMemberTable">
-      <thead><tr><th>Id</th><th>Membership Type</th><th>Member Name</th><th>Membership Status</th></tr></thead>
-      <tbody id="modalMemberBody"></tbody>
-    </table>
-    <div style="text-align: right; margin-top: 15px;">
-      <button class="btn btn-gray" onclick="closeModal('memberSearchModal')">Close</button>
+    <div class="flex-1 overflow-y-auto p-2" id="modalMemberList"></div>
+    <div class="p-4 border-t border-gray-100 flex justify-end">
+      <button onclick="closeMemberSearch()" class="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Close</button>
     </div>
   </div>
 </div>
-<div class="modal-overlay hidden" id="payModal">
-  <div class="modal-box"><div class="modal-title">Confirm Payment</div><p style="font-size:13px;margin-bottom:14px;">Confirm payment for the selected packages?</p><div id="payModalSummary" style="font-size:13px;"></div><div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('payModal')">Cancel</button><button class="btn btn-purple" onclick="processPayment()">✔ Process Payment</button></div></div>
+
+<!-- Pay Confirmation Modal -->
+<div class="modal-overlay-mp fixed inset-0 bg-black/40 z-[999] flex items-center justify-center p-4" id="payModal">
+  <div class="modal-box-mp bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center">
+    <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <i data-lucide="check-circle" class="w-7 h-7 text-emerald-600"></i>
+    </div>
+    <h3 class="text-base font-bold text-gray-900">Confirm Payment</h3>
+    <p class="text-sm text-gray-500 mt-1">Process payment for the selected months?</p>
+    <div id="payModalSummary" class="mt-4 text-left"></div>
+    <div class="flex gap-3 mt-5">
+      <button onclick="closePayModal()" class="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
+      <button onclick="processPayment()" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm">Confirm &amp; Pay</button>
+    </div>
+  </div>
 </div>
+
 <script src="script.js"></script>
 <script>
-const MEMBERS_DATA = [{id:'M001', name:'Andi Saputra', type:'Monthly', status:'ACTIVE', keyfob:'KF-001', email:'andi@email.com'}, {id:'M002', name:'Budi Santoso', type:'Monthly', status:'ACTIVE', keyfob:'KF-002', email:'budi@email.com'}, {id:'M003', name:'Citra Dewi', type:'Yearly', status:'FREEZE', keyfob:'KF-003', email:'citra@email.com'}, {id:'M004', name:'Dian Rahayu', type:'Monthly', status:'ACTIVE', keyfob:'KF-004', email:'dian@email.com'}, {id:'M005', name:'Eko Prasetyo', type:'Monthly', status:'EXPIRED', keyfob:'KF-005', email:'eko@email.com'}, {id:'M006', name:'Fajar Nugroho', type:'Yearly', status:'ACTIVE', keyfob:'KF-006', email:'fajar@email.com'}];
-const PACKAGES = [{id:'P1', name:'Monthly Subscription', type:'Subscription', price:350000}, {id:'P2', name:'Yearly Subscription', type:'Subscription', price:3500000}, {id:'P3', name:'Personal Training', type:'PT Package', price:500000}, {id:'P4', name:'Locker Rental', type:'Merchandise', price:100000}];
-let selectedMember = null; let selectedPackages = {};
-function statusBadge(s) { const m={ACTIVE:'badge-active',EXPIRED:'badge-expired',FREEZE:'badge-freeze',DEFAULTED:'badge-defaulted'}; return `<span class="badge ${m[s]||''}">${s}</span>`; }
-function searchModalMembers() { const q = document.getElementById('modalMemberSearch').value.toLowerCase(); renderModalMembers(MEMBERS_DATA.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q))); }
-function renderModalMembers(data) {
-  const tbody = document.getElementById('modalMemberBody');
-  tbody.innerHTML = data.map(m => `
-    <tr onclick="selectMember(${JSON.stringify(m)})" style="cursor: pointer;">
-      <td>${m.id}</td>
-      <td>${m.type}</td>
-      <td style="font-weight: 600;">${m.name}</td>
-      <td>${m.status}</td>
-    </tr>
-  `).join('');
+const MEMBERS_DATA = [
+  { id: 'M001', name: 'Andi Saputra',  type: 'EFT',     status: 'ACTIVE',  keyfob: 'KF-001', email: 'andi@email.com',  signup: '2022-01-07', monthlyAmount: 475000, lastPayment: 'Apr 2026' },
+  { id: 'M002', name: 'Budi Santoso',  type: 'EFT',     status: 'ACTIVE',  keyfob: 'KF-002', email: 'budi@email.com',  signup: '2022-06-15', monthlyAmount: 475000, lastPayment: 'Mar 2026' },
+  { id: 'M003', name: 'Citra Dewi',    type: 'PIF',     status: 'FREEZE',  keyfob: 'KF-003', email: 'citra@email.com', signup: '2023-03-01', monthlyAmount: 350000, lastPayment: 'Jan 2026' },
+  { id: 'M004', name: 'Dian Rahayu',   type: 'EFT',     status: 'ACTIVE',  keyfob: 'KF-004', email: 'dian@email.com',  signup: '2023-08-20', monthlyAmount: 475000, lastPayment: 'Apr 2026' },
+  { id: 'M005', name: 'Eko Prasetyo',  type: 'PIF',     status: 'EXPIRED', keyfob: 'KF-005', email: 'eko@email.com',   signup: '2022-04-10', monthlyAmount: 200000, lastPayment: 'Dec 2025' },
+  { id: 'M006', name: 'Fajar Nugroho', type: 'EFT',     status: 'ACTIVE',  keyfob: 'KF-006', email: 'fajar@email.com', signup: '2024-01-05', monthlyAmount: 475000, lastPayment: 'Apr 2026' },
+];
+
+let selectedMember = null;
+let monthStatuses = {};
+let currentStep = 1;
+
+const AVATAR_COLORS = [
+  'from-blue-500 to-indigo-500', 'from-emerald-500 to-teal-500', 'from-orange-500 to-red-500',
+  'from-violet-500 to-purple-500', 'from-pink-500 to-rose-500', 'from-cyan-500 to-blue-500',
+];
+function getAvatarColor(n) { let h=0; for(let i=0;i<n.length;i++) h=n.charCodeAt(i)+((h<<5)-h); return AVATAR_COLORS[Math.abs(h)%AVATAR_COLORS.length]; }
+function getInitials(n) { return n.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase(); }
+function statusBadge(s) {
+  const m = { ACTIVE:'bg-emerald-50 text-emerald-700 ring-emerald-600/20', EXPIRED:'bg-orange-50 text-orange-700 ring-orange-600/20', FREEZE:'bg-sky-50 text-sky-700 ring-sky-600/20', DEFAULTED:'bg-red-50 text-red-700 ring-red-600/20' };
+  return `<span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-full ring-1 ring-inset ${m[s]||''}">${s}</span>`;
 }
-function selectMember(m) { selectedMember = m; selectedPackages = {}; document.getElementById('memberSearchInput').value = m.name + ' (' + m.id + ')'; closeModal('memberSearchModal'); renderPaymentCard(); }
-function clearMember() { selectedMember = null; selectedPackages = {}; document.getElementById('memberSearchInput').value = ''; document.getElementById('paymentContent').innerHTML = `<div class="empty-state"><div class="icon">💳</div><p>Select a gym and search for a member to view payment details.</p></div>`; }
-function onGymChange() { if (selectedMember) renderPaymentCard(); }
-function renderPaymentCard() { if (!selectedMember) return; const total = Object.values(selectedPackages).reduce((s,p)=>s+p.price,0); document.getElementById('paymentContent').innerHTML = `<div class="payment-card"><div class="payment-card-header"><span>Payment Details – ${document.getElementById('gymSelect').value}</span><span>${statusBadge(selectedMember.status)}</span></div><div class="payment-card-body"><div class="payment-info-grid"><div class="info-item"><label>Member ID</label><div class="val">${selectedMember.id}</div></div><div class="info-item"><label>Member Name</label><div class="val">${selectedMember.name}</div></div><div class="info-item"><label>Email</label><div class="val">${selectedMember.email}</div></div><div class="info-item"><label>KeyFob</label><div class="val">${selectedMember.keyfob}</div></div><div class="info-item"><label>Membership Type</label><div class="val">${selectedMember.type}</div></div></div><div class="packages-title">Select Package(s)</div>${PACKAGES.map(p => `<div class="package-row"><div><div class="pkg-name">${p.name}</div><div class="pkg-type">${p.type}</div></div><div class="pkg-select"><span class="pkg-price">IDR ${p.price.toLocaleString()}</span><input type="checkbox" id="pkg-${p.id}" onchange="togglePackage('${p.id}',${JSON.stringify(p)})" ${selectedPackages[p.id]?'checked':''}></div></div>`).join('')}</div><div class="total-row"><span class="total-label">Total</span><span class="total-amount">IDR ${total.toLocaleString()}</span></div><div style="padding:12px 18px;display:flex;gap:10px;justify-content:flex-end;background:var(--gray-100);"><button class="btn btn-gray" onclick="clearMember()">✕ Cancel</button><button class="btn btn-purple" onclick="openPayModal()" ${Object.keys(selectedPackages).length===0?'disabled':''}>✔ Process Payment</button></div></div>`; }
-function togglePackage(id, pkg) { if (selectedPackages[id]) delete selectedPackages[id]; else selectedPackages[id] = pkg; renderPaymentCard(); }
-function openPayModal() { const items = Object.values(selectedPackages); const total = items.reduce((s,p)=>s+p.price,0); document.getElementById('payModalSummary').innerHTML = `<table class="data-table" style="margin-bottom:10px;"><thead><tr><th>Package</th><th>Price</th></tr></thead><tbody>${items.map(p=>`<tr><td>${p.name}</td><td>IDR ${p.price.toLocaleString()}</td></tr>`).join('')}</tbody></table><div style="font-weight:700;text-align:right;">Total: IDR ${total.toLocaleString()}</div>`; openModal('payModal'); }
-function processPayment() { closeModal('payModal'); showToast('Payment processed successfully!', 'success'); clearMember(); }
-renderModalMembers(MEMBERS_DATA);
+function fmtCurrency(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
+
+// Bikin daftar bulan dari signup sampai sekarang
+function generateMonths(signupDate) {
+  const months = [];
+  const start = new Date(signupDate);
+  const now = new Date();
+  let d = new Date(start.getFullYear(), start.getMonth(), 1);
+  while (d <= now) {
+    months.push({ key: d.toISOString().slice(0,7), label: d.toLocaleDateString('en-US', { month:'short', year:'numeric' }) });
+    d.setMonth(d.getMonth() + 1);
+  }
+  return months;
+}
+
+// === Modal helpers ===
+function openMemberSearch() {
+  document.getElementById('memberSearchModal').classList.add('open');
+  document.getElementById('modalMemberSearch').value = '';
+  renderModalMembers(MEMBERS_DATA);
+  setTimeout(() => document.getElementById('modalMemberSearch').focus(), 100);
+}
+function closeMemberSearch() { document.getElementById('memberSearchModal').classList.remove('open'); }
+function closePayModal() { document.getElementById('payModal').classList.remove('open'); }
+
+function searchModalMembers() {
+  const q = document.getElementById('modalMemberSearch').value.toLowerCase();
+  renderModalMembers(MEMBERS_DATA.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)));
+}
+
+function renderModalMembers(data) {
+  const list = document.getElementById('modalMemberList');
+  if (!data.length) { list.innerHTML = '<div class="text-center py-8 text-sm text-gray-400">No members found.</div>'; return; }
+  list.innerHTML = data.map(m => `
+    <div onclick="selectMember(${JSON.stringify(m).replace(/"/g,'&quot;')})"
+         class="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-violet-50/60 transition-colors group">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-br ${getAvatarColor(m.name)} flex items-center justify-center flex-shrink-0">
+        <span class="text-[11px] font-bold text-white">${getInitials(m.name)}</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+          <p class="text-sm font-semibold text-gray-900 group-hover:text-violet-700 transition-colors">${m.name}</p>
+          ${statusBadge(m.status)}
+        </div>
+        <p class="text-xs text-gray-400 mt-0.5">${m.id} &middot; ${m.type} &middot; ${fmtCurrency(m.monthlyAmount)}/mo</p>
+      </div>
+      <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 group-hover:text-violet-400 flex-shrink-0"></i>
+    </div>`).join('');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function selectMember(m) {
+  selectedMember = m;
+  monthStatuses = {};
+  currentStep = 1;
+  const months = generateMonths(m.signup);
+  months.forEach(mo => { monthStatuses[mo.key] = 'notcol'; });
+  document.getElementById('memberSearchInput').value = m.name + ' (' + m.id + ')';
+  closeMemberSearch();
+  render();
+}
+
+function clearMember() {
+  selectedMember = null;
+  monthStatuses = {};
+  currentStep = 1;
+  document.getElementById('memberSearchInput').value = '';
+  renderEmptyState();
+}
+
+function onGymChange() { if (selectedMember) render(); }
+
+// === Render logic ===
+function renderEmptyState() {
+  document.getElementById('paymentContent').innerHTML = `
+    <div class="flex flex-col items-center justify-center py-20 text-center">
+      <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+        <i data-lucide="credit-card" class="w-8 h-8 text-gray-300"></i>
+      </div>
+      <h3 class="text-base font-bold text-gray-400">No Member Selected</h3>
+      <p class="text-sm text-gray-400 mt-1 max-w-xs">Select a gym and search for a member to view payment details.</p>
+    </div>`;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function getStats() {
+  const collectMonths = Object.values(monthStatuses).filter(s => s === 'collect').length;
+  const waivedMonths = Object.values(monthStatuses).filter(s => s === 'waived').length;
+  const amount = selectedMember ? selectedMember.monthlyAmount : 0;
+  const subtotal = collectMonths * amount;
+  return { collectMonths, waivedMonths, subtotal, amount };
+}
+
+function render() {
+  if (!selectedMember) { renderEmptyState(); return; }
+  const m = selectedMember;
+  const gym = document.getElementById('gymSelect').value;
+  const stats = getStats();
+
+  // Right panel (sticky): member info + summary
+  const rightPanel = `
+    <div class="lg:w-[340px] flex-shrink-0">
+      <div class="lg:sticky lg:top-0 space-y-4">
+        <!-- Member card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${getAvatarColor(m.name)} flex items-center justify-center flex-shrink-0 shadow-md">
+              <span class="text-lg font-bold text-white">${getInitials(m.name)}</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-sm font-bold text-gray-900 truncate">${m.name}</h3>
+              <p class="text-xs text-gray-400">${gym}</p>
+            </div>
+            ${statusBadge(m.status)}
+          </div>
+          <div class="space-y-2.5">
+            ${[
+              { icon:'calendar', label:'Signup Date', value: new Date(m.signup).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) },
+              { icon:'clock', label:'Last Payment', value: m.lastPayment },
+              { icon:'banknote', label:'Monthly Amount', value: fmtCurrency(m.monthlyAmount) },
+              { icon:'tag', label:'Membership Type', value: m.type },
+              { icon:'hash', label:'Member ID', value: m.id },
+              { icon:'credit-card', label:'KeyFob', value: m.keyfob },
+            ].map(f => `
+              <div class="flex items-center gap-2.5 p-2.5 bg-gray-50 rounded-lg">
+                <div class="w-7 h-7 bg-white rounded-md shadow-sm flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="${f.icon}" class="w-3.5 h-3.5 text-violet-500"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-[9px] text-gray-400 uppercase font-semibold tracking-wider">${f.label}</p>
+                  <p class="text-xs font-bold text-gray-900 truncate">${f.value}</p>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <!-- Running total -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Summary</p>
+            <span class="text-[10px] font-semibold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">Step ${currentStep}/2</span>
+          </div>
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Collect</span>
+              <span class="font-semibold text-gray-900">${stats.collectMonths} month(s)</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Waived</span>
+              <span class="font-semibold text-gray-900">${stats.waivedMonths} month(s)</span>
+            </div>
+            <div class="my-2 border-t border-gray-100"></div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Subtotal</span>
+              <span class="font-bold font-mono text-gray-900">${fmtCurrency(stats.subtotal)}</span>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-100">
+            <div class="flex justify-between items-end">
+              <p class="text-xs text-gray-400 font-semibold uppercase">Total</p>
+              <p class="text-xl font-bold font-mono ${stats.subtotal > 0 ? 'text-violet-700' : 'text-gray-300'}">${fmtCurrency(stats.subtotal)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // Left panel: step content
+  let leftPanel = '';
+  if (currentStep === 1) {
+    leftPanel = renderStep1();
+  } else {
+    leftPanel = renderStep2();
+  }
+
+  document.getElementById('paymentContent').innerHTML = `
+    <div class="flex flex-col lg:flex-row gap-5">
+      <div class="flex-1 min-w-0">${leftPanel}</div>
+      ${rightPanel}
+    </div>`;
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Step 1: Month selection
+function renderStep1() {
+  const months = generateMonths(selectedMember.signup);
+  const recentMonths = months.slice(-24);
+
+  return `
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-sm font-bold text-gray-900">Prior &amp; Current Months</h3>
+          <p class="text-xs text-gray-400 mt-0.5">Select payment status for each month</p>
+        </div>
+        <span class="text-[11px] font-semibold text-gray-400 bg-gray-100 px-2.5 py-0.5 rounded-full">${recentMonths.length} months</span>
+      </div>
+      <div class="space-y-2">
+        ${recentMonths.map(mo => {
+          const st = monthStatuses[mo.key] || 'notcol';
+          return `
+          <div class="flex items-center gap-3 p-2.5 rounded-lg border border-gray-100 hover:bg-gray-50/50 transition-colors">
+            <p class="text-sm font-semibold text-gray-700 w-24 flex-shrink-0">${mo.label}</p>
+            <div class="flex gap-1.5 flex-1">
+              <button onclick="setMonthStatus('${mo.key}','collect')"
+                class="month-btn flex-1 px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border border-gray-200 text-gray-500 hover:border-emerald-300 transition-all ${st==='collect'?'active-collect':''}">
+                Collect
+              </button>
+              <button onclick="setMonthStatus('${mo.key}','waived')"
+                class="month-btn flex-1 px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border border-gray-200 text-gray-500 hover:border-amber-300 transition-all ${st==='waived'?'active-waived':''}">
+                Waived
+              </button>
+              <button onclick="setMonthStatus('${mo.key}','notcol')"
+                class="month-btn flex-1 px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border border-gray-200 text-gray-500 hover:border-gray-300 transition-all ${st==='notcol'?'active-notcol':''}">
+                Not Collected
+              </button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="flex justify-end mt-5 pt-4 border-t border-gray-100">
+        <button onclick="goStep2()" class="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 rounded-xl hover:bg-violet-700 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+          ${getStats().collectMonths === 0 ? 'disabled' : ''}>
+          Continue to Payment
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>`;
+}
+
+// Step 2: Payment summary + payment method
+function renderStep2() {
+  const stats = getStats();
+  const m = selectedMember;
+
+  return `
+    <div class="space-y-5">
+      <!-- Summary breakdown -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">Payment Summary</h3>
+        <div class="space-y-2.5">
+          ${[
+            { label: `${stats.collectMonths} paid month(s)`, value: fmtCurrency(stats.subtotal), icon: 'check-circle', color: 'text-emerald-500' },
+            { label: 'Current month', value: fmtCurrency(stats.collectMonths > 0 ? m.monthlyAmount : 0), icon: 'calendar', color: 'text-blue-500' },
+            { label: `${stats.waivedMonths} waived month(s)`, value: fmtCurrency(0), icon: 'slash', color: 'text-amber-500' },
+            { label: '0 advance month(s)', value: fmtCurrency(0), icon: 'fast-forward', color: 'text-violet-500' },
+            { label: 'Late Fee', value: fmtCurrency(0), icon: 'alert-triangle', color: 'text-red-500' },
+            { label: 'Discount', value: fmtCurrency(0), icon: 'percent', color: 'text-sky-500' },
+          ].map(r => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div class="flex items-center gap-2.5">
+                <i data-lucide="${r.icon}" class="w-4 h-4 ${r.color} flex-shrink-0"></i>
+                <span class="text-sm text-gray-700">${r.label}</span>
+              </div>
+              <span class="text-sm font-bold font-mono text-gray-900">${r.value}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Payment method -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">Payment Details</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Payment Change</label>
+            <div class="px-3 py-2.5 bg-gray-50 rounded-lg text-sm font-bold font-mono text-gray-900">${fmtCurrency(0)}</div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Sales Name</label>
+            <select class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-white focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none">
+              <option>OSP Kemang - ${document.getElementById('gymSelect').value}</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Select Payment Method</label>
+            <div class="flex gap-2 flex-wrap">
+              ${['Cash','Credit Card','Debit Card','Bank Transfer'].map((p,i) => `
+                <label class="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg cursor-pointer hover:border-violet-300 has-[:checked]:border-violet-500 has-[:checked]:bg-violet-50 transition-all">
+                  <input type="radio" name="payMethod" value="${p}" ${i===0?'checked':''} class="accent-violet-600 w-3.5 h-3.5">
+                  <span class="text-xs font-semibold text-gray-700">${p}</span>
+                </label>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-between">
+        <button onclick="goStep1()" class="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>Back
+        </button>
+        <button onclick="openPayConfirm()" class="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm">
+          <i data-lucide="wallet" class="w-4 h-4"></i>Pay
+        </button>
+      </div>
+    </div>`;
+}
+
+function setMonthStatus(key, status) {
+  monthStatuses[key] = status;
+  render();
+}
+
+function goStep2() { currentStep = 2; render(); }
+function goStep1() { currentStep = 1; render(); }
+
+function openPayConfirm() {
+  const stats = getStats();
+  document.getElementById('payModalSummary').innerHTML = `
+    <div class="space-y-2 mb-3">
+      <div class="flex justify-between p-2.5 bg-gray-50 rounded-lg">
+        <span class="text-sm text-gray-600">Months to collect</span>
+        <span class="text-sm font-bold text-gray-900">${stats.collectMonths}</span>
+      </div>
+      <div class="flex justify-between p-2.5 bg-gray-50 rounded-lg">
+        <span class="text-sm text-gray-600">Monthly Amount</span>
+        <span class="text-sm font-bold font-mono text-gray-900">${fmtCurrency(stats.amount)}</span>
+      </div>
+    </div>
+    <div class="flex justify-between pt-3 border-t border-gray-200">
+      <span class="text-sm font-bold text-gray-700">Total</span>
+      <span class="text-lg font-bold font-mono text-emerald-700">${fmtCurrency(stats.subtotal)}</span>
+    </div>`;
+  document.getElementById('payModal').classList.add('open');
+}
+
+function processPayment() {
+  closePayModal();
+  showToast('Payment processed successfully!', 'success');
+  clearMember();
+}
+
+// Init
+renderEmptyState();
 </script>
 </body>
 </html>
