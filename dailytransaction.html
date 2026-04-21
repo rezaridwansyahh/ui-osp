@@ -1,32 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OSP – Daily Transaction</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      fontFamily: {
-        sans: ['IBM Plex Sans', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'monospace'],
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OSP – Daily Transaction</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['IBM Plex Sans', 'sans-serif'],
+            mono: ['IBM Plex Mono', 'monospace'],
+          }
+        }
       }
     }
-  }
-}
-</script>
-<link rel="stylesheet" href="styles.css">
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-<style>
-.tx-action-bar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--gray-100); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-.channel-tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; background: var(--gray-200); color: var(--gray-700); font-family: var(--font-mono); }
-.void-btn { background: none; border: 1px solid var(--red); color: var(--red); border-radius: 3px; padding: 3px 8px; font-size: 11px; cursor: pointer; font-family: var(--font); font-weight: 600; transition: background 0.12s; }
-.void-btn:hover { background: var(--red); color: var(--white); }
-.void-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-</style>
+  </script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body class="font-sans bg-gray-50 h-screen overflow-hidden">
 <div class="flex h-screen">
@@ -43,11 +36,11 @@ tailwind.config = {
       </div>
       <div class="min-w-0">
         <div class="text-white text-sm font-semibold truncate">osp_kemang</div>
-        <div class="text-slate-400 text-xs uppercase tracking-wider">MERCHANT</div>
+        <div class="text-slate-400 text-[10px] uppercase tracking-wider font-bold">MERCHANT</div>
       </div>
     </div>
     <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-1 sidebar-scrollbar">
-      <a href="home.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+      <a href="home.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
         <i data-lucide="home" class="w-[18px] h-[18px] flex-shrink-0"></i>Home
       </a>
       <div>
@@ -57,31 +50,31 @@ tailwind.config = {
         </button>
         <div class="menu-sub" id="sub-merchant">
           <div class="ml-[30px] pl-3 border-l border-slate-600 mt-1 space-y-0.5">
-            <a href="cardverify.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Card Verify Submission</a>
-            <a href="members.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Members</a>
-            <a href="monthlypayment.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Monthly Payment</a>
+            <a href="cardverify.html" class="block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5">Card Verify Submission</a>
+            <a href="members.html" class="block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5">Members</a>
+            <a href="monthlypayment.html" class="block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5">Monthly Payment</a>
           </div>
         </div>
       </div>
       <div>
         <button data-menu-toggle="sub-package" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-          <span class="flex items-center gap-3"><i data-lucide="package" class="w-[18px] h-[18px] flex-shrink-0"></i>Package &amp; Product</span>
+          <span class="flex items-center gap-3"><i data-lucide="package" class="w-[18px] h-[18px] flex-shrink-0"></i>Package & Product</span>
           <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
         </button>
         <div class="menu-sub" id="sub-package">
           <div class="ml-[30px] pl-3 border-l border-slate-600 mt-1 space-y-0.5">
-            <a href="product.html" class="menu-sub-link block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">Product</a>
+            <a href="product.html" class="block px-3 py-2 rounded-md text-sm text-slate-400 hover:text-white hover:bg-white/5">Product</a>
           </div>
         </div>
       </div>
       <div>
-        <button data-menu-toggle="sub-report" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+        <button data-menu-toggle="sub-report" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-white/5">
           <span class="flex items-center gap-3"><i data-lucide="bar-chart-3" class="w-[18px] h-[18px] flex-shrink-0"></i>Report</span>
           <i data-lucide="chevron-down" class="w-4 h-4 arrow-icon"></i>
         </button>
-        <div class="menu-sub" id="sub-report">
+        <div class="menu-sub open" id="sub-report">
           <div class="ml-[30px] pl-3 border-l border-slate-600 mt-1 space-y-0.5">
-            <a href="dailytransaction.html" class="menu-sub-link active block px-3 py-2 rounded-md text-sm text-white bg-white/5 font-medium">Daily Transaction</a>
+            <a href="dailytransaction.html" class="block px-3 py-2 rounded-md text-sm text-white bg-white/10 font-medium">Daily Transaction</a>
           </div>
         </div>
       </div>
@@ -91,7 +84,7 @@ tailwind.config = {
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
     <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 shadow-sm">
       <div class="flex items-center gap-3">
-        <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors">
+        <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
           <i data-lucide="menu" class="w-5 h-5 text-gray-600"></i>
         </button>
         <div class="flex items-center text-sm gap-1.5">
@@ -103,55 +96,323 @@ tailwind.config = {
         </div>
       </div>
       <div class="flex items-center gap-1">
-        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Power"><i data-lucide="power" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i></button>
-        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Fullscreen"><i data-lucide="maximize" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i></button>
-        <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Profile"><i data-lucide="user-circle" class="w-5 h-5 text-gray-400 group-hover:text-gray-600"></i></button>
-        <button class="p-2 rounded-lg hover:bg-red-50 transition-colors group" title="Auth"><i data-lucide="key-round" class="w-5 h-5 text-red-400 group-hover:text-red-600"></i></button>
+        <button class="p-2 rounded-lg hover:bg-gray-100 group"><i data-lucide="power" class="w-5 h-5 text-gray-400"></i></button>
+        <button class="p-2 rounded-lg hover:bg-gray-100 group"><i data-lucide="user-circle" class="w-5 h-5 text-gray-400"></i></button>
       </div>
     </header>
 
-    <main class="main">
-      <div class="tx-action-bar">
-        <button class="btn btn-gray" onclick="exportCSV('txTable','daily_transaction.csv')">⬇ Download</button>
-        <button class="btn btn-gray" onclick="toggleFilter('txFilter')">⚙ Filter</button>
-        <span style="font-size:12px;color:var(--gray-500);">Download Filter Report on Void Trx</span>
-        <div style="margin-left:auto;"><div class="search-wrap"><input type="text" id="txSearch" placeholder="Search Here…" oninput="liveSearch()"><button>🔍</button></div></div>
-      </div>
-      <div class="filter-panel" id="txFilter">
-        <div class="filter-row">
-          <div class="filter-group"><label>Transaction Date (From)</label><input type="date" class="form-control" id="fTxFrom"></div>
-          <div class="filter-group"><label>Transaction Date (To)</label><input type="date" class="form-control" id="fTxTo"></div>
-          <div class="filter-group"><label>Member Name / ID</label><input type="text" class="form-control" id="fTxMember" placeholder="Search member…"></div>
-          <div class="filter-group"><label>Invoice No</label><input type="text" class="form-control" id="fTxInvoice" placeholder="INV-…"></div>
-          <div class="filter-group"><label>Status</label><select class="form-control" id="fTxStatus"><option value="">All Status</option><option>SUCCESS</option><option>PENDING</option><option>VOID</option></select></div>
-          <div class="filter-group"><label>Channel</label><select class="form-control" id="fTxChannel"><option value="">All Channel</option><option>CREDIT</option><option>DEBIT</option><option>CASH</option><option>OTHERS</option><option>OVO</option><option>BANK_TRANSFER</option><option>BANK_TRANSFER_OSP</option><option>VIRTUAL_ACCOUNT</option><option>SPLIT_PAYMENT</option></select></div>
-          <div class="filter-group"><label>Gym</label><select class="form-control" id="fTxGym"><option value="">All Gyms</option><option>AF Kemang</option><option>AF Senayan</option><option>AF Menteng</option></select></div>
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 lg:p-6">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="exportCSV('txTable','daily_transaction.csv')" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all active:scale-95 shadow-sm">
+              <i data-lucide="download" class="w-4 h-4"></i>Export
+            </button>
+            <button onclick="toggleFilter('txFilter')" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-violet-600 bg-violet-50 border border-violet-100 rounded-lg hover:bg-violet-100 transition-all shadow-sm">
+              <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>Filter
+            </button>
+            <button onclick="downloadVoidReport()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-red-500 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-all active:scale-95 uppercase tracking-wide">
+              <i data-lucide="file-x" class="w-3.5 h-3.5"></i>Download Filter Report on Void Trx
+            </button>
+          </div>
+          <div class="relative w-full md:w-80">
+            <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input type="text" id="txSearch" oninput="liveSearch()" placeholder="Search invoice, member, channel..." 
+                   class="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-violet-400 focus:ring-4 focus:ring-violet-100 outline-none transition-all">
+          </div>
         </div>
-        <div class="filter-actions"><button class="btn btn-gray btn-sm" onclick="resetFilter()">↺ RESET</button><button class="btn btn-purple btn-sm" onclick="applyFilter()">⚙ FILTER</button></div>
+
+        <div id="txFilter" class="hidden mt-4 pt-4 border-t border-gray-100">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Date From</label>
+              <input type="date" id="fTxFrom" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Date To</label>
+              <input type="date" id="fTxTo" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Member Name / ID</label>
+              <input type="text" id="fTxMember" placeholder="Search member..." class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Invoice No</label>
+              <input type="text" id="fTxInvoice" placeholder="INV-..." class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
+              <select id="fTxStatus" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400">
+                <option value="">All Status</option>
+                <option>SUCCESS</option><option>PENDING</option><option>VOID</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Channel</label>
+              <select id="fTxChannel" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400">
+                <option value="">All Channel</option>
+                <option>CREDIT</option><option>DEBIT</option><option>CASH</option><option>OVO</option><option>BANK_TRANSFER</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Gym</label>
+              <select id="fTxGym" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400">
+                <option value="">All Gyms</option>
+                <option>AF Kemang</option><option>AF Senayan</option><option>AF Menteng</option>
+              </select>
+            </div>
+            <div class="flex items-end gap-2">
+              <button onclick="resetFilter()" class="flex-1 px-4 py-2 text-sm font-semibold text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Reset</button>
+              <button onclick="applyFilter()" class="flex-1 px-4 py-2 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm transition-colors">Apply Filter</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="table-wrap" style="overflow-x:auto;"><table class="data-table" id="txTable"><thead><tr><th style="width:45px;">No.</th><th>Transaction Date <button class="sort-btn" onclick="sortTable('txTable',1,this)">▼</button></th><th>Invoice <button class="sort-btn" onclick="sortTable('txTable',2,this)">▼</button></th><th>Member</th><th>Total</th><th>Status</th><th>Channel</th><th>Updated By</th><th>Gym</th><th style="width:70px;">Action</th></tr></thead><tbody id="txBody"></tbody></table></div>
-      <div class="table-footer">Total: Row (<span id="txTable-count">0</span>)<div class="pagination" id="txPagination"></div></div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left" id="txTable">
+            <thead>
+              <tr class="bg-slate-50 border-b border-gray-100">
+                <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">No.</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-violet-600" onclick="sortTable('txTable', 1, this)">Date</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-violet-600" onclick="sortTable('txTable', 2, this)">Invoice</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Member</th>
+                <th class="px-6 py-4 text-right text-[11px] font-bold text-slate-400 uppercase tracking-widest">Amount</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">Channel</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="txBody" class="divide-y divide-gray-50 text-sm">
+                </tbody>
+          </table>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-gray-100 flex items-center justify-between">
+          <span class="text-xs text-slate-400 font-medium">Total: <span id="txTable-count" class="text-slate-900 font-bold">0</span> records found</span>
+          <div id="txPagination" class="flex gap-1"></div>
+        </div>
+      </div>
     </main>
   </div>
 </div>
 
-<div class="modal-overlay hidden" id="voidModal"><div class="modal-box" style="max-width:420px;"><div class="modal-title">Void Transaction</div><p style="font-size:13px;">Are you sure you want to void this transaction?</p><div id="voidModalDetail" style="margin-top:10px;font-size:13px;"></div><div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('voidModal')">Cancel</button><button class="btn btn-red" onclick="confirmVoid()">Void Transaction</button></div></div></div>
-<div class="modal-overlay hidden" id="txDetailModal"><div class="modal-box" style="max-width:500px;"><div class="modal-title">Transaction Detail</div><div id="txDetailContent" class="modal-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;"></div><div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('txDetailModal')">Close</button></div></div></div>
+<div class="modal-overlay hidden fixed inset-0 bg-black/40 z-[999] flex items-center justify-center p-4 backdrop-blur-sm" id="voidModal">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <h3 class="text-sm font-bold text-gray-900 uppercase tracking-widest">Void Transaction</h3>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-4">Are you sure you want to void this transaction?</p>
+        <div id="voidModalDetail" class="p-3 bg-gray-50 rounded-xl text-xs font-medium text-gray-700 space-y-1"></div>
+    </div>
+    <div class="px-6 py-4 bg-gray-50 flex gap-3">
+      <button onclick="closeModal('voidModal')" class="flex-1 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl">Cancel</button>
+      <button onclick="confirmVoid()" class="flex-1 py-2 text-sm font-bold text-white bg-red-500 rounded-xl shadow-sm">Void Transaction</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden fixed inset-0 bg-black/40 z-[999] flex items-center justify-center p-4 backdrop-blur-sm" id="txDetailModal">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+      <h3 class="text-sm font-bold text-gray-900 uppercase tracking-widest">Transaction Detail</h3>
+      <button onclick="closeModal('txDetailModal')" class="p-2 hover:bg-gray-100 rounded-lg"><i data-lucide="x" class="w-5 h-5 text-gray-400"></i></button>
+    </div>
+    <div class="p-6 space-y-4" id="txDetailContent"></div>
+    <div class="px-6 py-4 bg-gray-50 text-right">
+      <button onclick="closeModal('txDetailModal')" class="px-6 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl">Close</button>
+    </div>
+  </div>
+</div>
+
 <script src="script.js"></script>
 <script>
-const TRANSACTIONS = [{id:'T001', date:'2024-07-01', invoice:'INV-20240701-001', member:'Andi Saputra', total:350000, status:'SUCCESS', channel:'CREDIT', updatedBy:'system', gym:'AF Kemang'}, {id:'T002', date:'2024-07-01', invoice:'INV-20240701-002', member:'Budi Santoso', total:350000, status:'SUCCESS', channel:'DEBIT', updatedBy:'system', gym:'AF Kemang'}, {id:'T003', date:'2024-07-02', invoice:'INV-20240702-001', member:'Citra Dewi', total:3500000, status:'PENDING', channel:'BANK_TRANSFER', updatedBy:'admin', gym:'AF Senayan'}, {id:'T004', date:'2024-07-02', invoice:'INV-20240702-002', member:'Dian Rahayu', total:350000, status:'SUCCESS', channel:'CASH', updatedBy:'system', gym:'AF Kemang'}, {id:'T005', date:'2024-07-03', invoice:'INV-20240703-001', member:'Eko Prasetyo', total:500000, status:'VOID', channel:'CREDIT', updatedBy:'admin', gym:'AF Menteng'}, {id:'T006', date:'2024-07-03', invoice:'INV-20240703-002', member:'Fajar Nugroho', total:350000, status:'SUCCESS', channel:'OVO', updatedBy:'system', gym:'AF Kemang'}, {id:'T007', date:'2024-07-04', invoice:'INV-20240704-001', member:'Gita Lestari', total:1500000, status:'SUCCESS', channel:'VIRTUAL_ACCOUNT', updatedBy:'system', gym:'AF Senayan'}, {id:'T008', date:'2024-07-04', invoice:'INV-20240704-002', member:'Hendra Wijaya', total:350000, status:'PENDING', channel:'BANK_TRANSFER_OSP', updatedBy:'admin', gym:'AF Kemang'}, {id:'T009', date:'2024-07-05', invoice:'INV-20240705-001', member:'Indah Pertiwi', total:50000, status:'SUCCESS', channel:'CASH', updatedBy:'system', gym:'AF Kemang'}, {id:'T010', date:'2024-07-05', invoice:'INV-20240705-002', member:'Joko Susanto', total:100000, status:'VOID', channel:'DEBIT', updatedBy:'admin', gym:'AF Menteng'}, {id:'T011', date:'2024-07-06', invoice:'INV-20240706-001', member:'Kartika Sari', total:3500000, status:'SUCCESS', channel:'SPLIT_PAYMENT', updatedBy:'system', gym:'AF Senayan'}, {id:'T012', date:'2024-07-06', invoice:'INV-20240706-002', member:'Lutfi Hakim', total:350000, status:'SUCCESS', channel:'CREDIT', updatedBy:'system', gym:'AF Kemang'}];
-let filteredTx = [...TRANSACTIONS]; let voidTarget = null; const PAGE_SIZE = 8; let currentPage = 1;
-function statusBadge(s){ const m={SUCCESS:'badge-success',PENDING:'badge-pending',VOID:'badge-void'}; return `<span class="badge ${m[s]||''}">${s}</span>`; }
-function renderTable(data, page) { const start = (page-1)*PAGE_SIZE; const slice = data.slice(start, start+PAGE_SIZE); document.getElementById('txBody').innerHTML = slice.map((t,i) => `<tr><td>${start+i+1}.</td><td>${t.date}</td><td style="font-family:var(--font-mono);font-size:12px;">${t.invoice}</td><td>${t.member}</td><td style="font-family:var(--font-mono);">IDR ${t.total.toLocaleString()}</td><td>${statusBadge(t.status)}</td><td><span class="channel-tag">${t.channel}</span></td><td>${t.updatedBy}</td><td>${t.gym}</td><td style="display:flex;gap:4px;"><button class="action-icon" onclick='showTxDetail(${JSON.stringify(t)})' title="View">👁</button><button class="void-btn" onclick='askVoid(${JSON.stringify(t)})' ${t.status==='VOID'?'disabled':''}>Void</button></td></tr>`).join(''); document.getElementById('txTable-count').textContent = data.length; renderPagination(data.length, page); }
-function renderPagination(total, page) { const pages = Math.ceil(total/PAGE_SIZE); const pg = document.getElementById('txPagination'); if (pages<=1){pg.innerHTML='';return;} let html = `<button class="pg-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`; for(let i=1;i<=pages;i++) html+=`<button class="pg-btn ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`; html+=`<button class="pg-btn" onclick="goPage(${page+1})" ${page===pages?'disabled':''}>›</button>`; pg.innerHTML=html; }
-function goPage(p) { const pages = Math.ceil(filteredTx.length/PAGE_SIZE); currentPage = Math.max(1, Math.min(p, pages)); renderTable(filteredTx, currentPage); }
-function liveSearch() { const q = document.getElementById('txSearch').value.toLowerCase(); filteredTx = TRANSACTIONS.filter(t => t.invoice.toLowerCase().includes(q) || t.member.toLowerCase().includes(q) || t.channel.toLowerCase().includes(q) || t.status.toLowerCase().includes(q)); currentPage=1; renderTable(filteredTx, 1); }
-function applyFilter() { const from = document.getElementById('fTxFrom').value; const to = document.getElementById('fTxTo').value; const member = document.getElementById('fTxMember').value.toLowerCase(); const invoice = document.getElementById('fTxInvoice').value.toLowerCase(); const status = document.getElementById('fTxStatus').value; const channel = document.getElementById('fTxChannel').value; const gym = document.getElementById('fTxGym').value; filteredTx = TRANSACTIONS.filter(t => { if (from && t.date < from) return false; if (to && t.date > to) return false; if (member && !t.member.toLowerCase().includes(member)) return false; if (invoice && !t.invoice.toLowerCase().includes(invoice)) return false; if (status && t.status !== status) return false; if (channel && t.channel !== channel) return false; if (gym && t.gym !== gym) return false; return true; }); currentPage=1; renderTable(filteredTx,1); document.getElementById('txFilter').classList.remove('open'); }
-function resetFilter() { ['fTxFrom','fTxTo','fTxMember','fTxInvoice'].forEach(id=>document.getElementById(id).value=''); ['fTxStatus','fTxChannel','fTxGym'].forEach(id=>document.getElementById(id).value=''); filteredTx=[...TRANSACTIONS]; currentPage=1; renderTable(filteredTx,1); }
-function askVoid(t) { voidTarget = t.id; document.getElementById('voidModalDetail').innerHTML = `<strong>${t.invoice}</strong><br>Member: ${t.member}<br>Total: IDR ${t.total.toLocaleString()}`; openModal('voidModal'); }
-function confirmVoid() { const tx = TRANSACTIONS.find(t=>t.id===voidTarget); if (tx) tx.status = 'VOID'; filteredTx = [...TRANSACTIONS]; renderTable(filteredTx, currentPage); closeModal('voidModal'); showToast('Transaction voided.','success'); }
-function showTxDetail(t) { document.getElementById('txDetailContent').innerHTML = `<div class="form-group"><label>Invoice</label><div style="font-family:var(--font-mono);font-size:12px;">${t.invoice}</div></div><div class="form-group"><label>Date</label><div>${t.date}</div></div><div class="form-group"><label>Member</label><div>${t.member}</div></div><div class="form-group"><label>Total</label><div style="font-family:var(--font-mono);font-weight:700;">IDR ${t.total.toLocaleString()}</div></div><div class="form-group"><label>Status</label><div>${statusBadge(t.status)}</div></div><div class="form-group"><label>Channel</label><div><span class="channel-tag">${t.channel}</span></div></div><div class="form-group"><label>Updated By</label><div>${t.updatedBy}</div></div><div class="form-group"><label>Gym</label><div>${t.gym}</div></div>`; openModal('txDetailModal'); }
-renderTable(TRANSACTIONS, 1);
+const TRANSACTIONS = [
+    {id:'T001', date:'2024-07-01', invoice:'INV-20240701-001', member:'Andi Saputra', total:350000, status:'SUCCESS', channel:'CREDIT', updatedBy:'system', gym:'AF Kemang'},
+    {id:'T002', date:'2024-07-01', invoice:'INV-20240701-002', member:'Budi Santoso', total:350000, status:'SUCCESS', channel:'DEBIT', updatedBy:'system', gym:'AF Kemang'},
+    {id:'T003', date:'2024-07-02', invoice:'INV-20240702-001', member:'Citra Dewi', total:3500000, status:'PENDING', channel:'BANK_TRANSFER', updatedBy:'admin', gym:'AF Senayan'},
+    {id:'T004', date:'2024-07-02', invoice:'INV-20240702-002', member:'Dian Rahayu', total:350000, status:'SUCCESS', channel:'CASH', updatedBy:'system', gym:'AF Kemang'},
+    {id:'T005', date:'2024-07-03', invoice:'INV-20240703-001', member:'Eko Prasetyo', total:500000, status:'VOID', channel:'CREDIT', updatedBy:'admin', gym:'AF Menteng'},
+    {id:'T006', date:'2024-07-03', invoice:'INV-20240703-002', member:'Fajar Nugroho', total:350000, status:'SUCCESS', channel:'OVO', updatedBy:'system', gym:'AF Kemang'},
+    {id:'T007', date:'2024-07-04', invoice:'INV-20240704-001', member:'Gita Lestari', total:1500000, status:'SUCCESS', channel:'VIRTUAL_ACCOUNT', updatedBy:'system', gym:'AF Senayan'},
+    {id:'T008', date:'2024-07-04', invoice:'INV-20240704-002', member:'Hendra Wijaya', total:350000, status:'PENDING', channel:'BANK_TRANSFER_OSP', updatedBy:'admin', gym:'AF Kemang'},
+    {id:'T009', date:'2024-07-05', invoice:'INV-20240705-001', member:'Indah Pertiwi', total:50000, status:'SUCCESS', channel:'CASH', updatedBy:'system', gym:'AF Kemang'},
+    {id:'T010', date:'2024-07-05', invoice:'INV-20240705-002', member:'Joko Susanto', total:100000, status:'VOID', channel:'DEBIT', updatedBy:'admin', gym:'AF Menteng'}
+];
+
+let filteredTx = [...TRANSACTIONS];
+const PAGE_SIZE = 8;
+let currentPage = 1;
+let voidTarget = null;
+
+function toggleFilter(id) {
+    const panel = document.getElementById(id);
+    if (panel) {
+        panel.classList.toggle('hidden');
+    }
+}
+
+function statusBadge(s) {
+    const map = {
+        SUCCESS: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
+        PENDING: 'bg-amber-50 text-amber-600 ring-amber-100',
+        VOID: 'bg-red-50 text-red-500 ring-red-100'
+    };
+    return `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold ring-1 ring-inset ${map[s] || 'bg-gray-100 text-gray-500'}">${s}</span>`;
+}
+
+function renderTable(data, page) {
+    const start = (page - 1) * PAGE_SIZE;
+    const slice = data.slice(start, start + PAGE_SIZE);
+    const tbody = document.getElementById('txBody');
+    
+    tbody.innerHTML = slice.map((t, i) => `
+        <tr class="hover:bg-violet-50/30 transition-colors">
+            <td class="px-6 py-4 text-gray-400 font-medium">${start + i + 1}</td>
+            <td class="px-6 py-4 font-semibold text-gray-600">${t.date}</td>
+            <td class="px-6 py-4 font-mono font-bold text-violet-600">${t.invoice}</td>
+            <td class="px-6 py-4 font-bold text-slate-800">${t.member}</td>
+            <td class="px-6 py-4 text-right font-mono font-bold text-slate-900">IDR ${t.total.toLocaleString()}</td>
+            <td class="px-6 py-4">${statusBadge(t.status)}</td>
+            <td class="px-6 py-4 text-center"><span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wide">${t.channel}</span></td>
+            <td class="px-6 py-4 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <button onclick='showTxDetail(${JSON.stringify(t)})' class="p-2 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick='askVoid(${JSON.stringify(t)})' class="px-2 py-1 text-[10px] font-bold border border-red-200 text-red-500 rounded hover:bg-red-50 transition-all" ${t.status==='VOID'?'disabled':''}>
+                        Void
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+
+    document.getElementById('txTable-count').textContent = data.length;
+    renderPagination(data.length, page);
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function renderPagination(total, page) {
+    const pages = Math.ceil(total / PAGE_SIZE);
+    const pg = document.getElementById('txPagination');
+    if (pages <= 1) { pg.innerHTML = ''; return; }
+
+    let html = `<button onclick="goPage(${page-1})" ${page===1?'disabled':''} class="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-30 transition-colors"><i data-lucide="chevron-left" class="w-4 h-4 text-gray-400"></i></button>`;
+    for(let i=1; i<=pages; i++) {
+        const active = i === page ? 'bg-violet-600 text-white border-violet-600 shadow-sm shadow-violet-200' : 'bg-white text-gray-600 hover:bg-gray-50';
+        html += `<button onclick="goPage(${i})" class="w-8 h-8 rounded-lg text-xs font-bold border border-gray-200 transition-all ${active}">${i}</button>`;
+    }
+    html += `<button onclick="goPage(${page+1})" ${page===pages?'disabled':''} class="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-30 transition-colors"><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></button>`;
+    pg.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function goPage(p) {
+    currentPage = p;
+    renderTable(filteredTx, p);
+}
+
+function liveSearch() {
+    const q = document.getElementById('txSearch').value.toLowerCase();
+    filteredTx = TRANSACTIONS.filter(t => t.invoice.toLowerCase().includes(q) || t.member.toLowerCase().includes(q) || t.channel.toLowerCase().includes(q) || t.status.toLowerCase().includes(q));
+    currentPage = 1;
+    renderTable(filteredTx, 1);
+}
+
+function applyFilter() {
+    const from = document.getElementById('fTxFrom').value;
+    const to = document.getElementById('fTxTo').value;
+    const member = document.getElementById('fTxMember').value.toLowerCase();
+    const invoice = document.getElementById('fTxInvoice').value.toLowerCase();
+    const status = document.getElementById('fTxStatus').value;
+    const channel = document.getElementById('fTxChannel').value;
+    const gym = document.getElementById('fTxGym').value;
+
+    filteredTx = TRANSACTIONS.filter(t => {
+        if (from && t.date < from) return false;
+        if (to && t.date > to) return false;
+        if (member && !t.member.toLowerCase().includes(member)) return false;
+        if (invoice && !t.invoice.toLowerCase().includes(invoice)) return false;
+        if (status && t.status !== status) return false;
+        if (channel && t.channel !== channel) return false;
+        if (gym && t.gym !== gym) return false;
+        return true;
+    });
+
+    currentPage = 1;
+    renderTable(filteredTx, 1);
+    document.getElementById('txFilter').classList.add('hidden');
+    showToast('Filter applied', 'success');
+}
+
+function resetFilter() {
+    ['fTxFrom','fTxTo','fTxMember','fTxInvoice'].forEach(id=>document.getElementById(id).value='');
+    ['fTxStatus','fTxChannel','fTxGym'].forEach(id=>document.getElementById(id).value='');
+    filteredTx = [...TRANSACTIONS];
+    currentPage = 1;
+    renderTable(filteredTx, 1);
+}
+
+function askVoid(t) {
+    voidTarget = t.id;
+    document.getElementById('voidModalDetail').innerHTML = `<strong>${t.invoice}</strong><br>Member: ${t.member}<br>Total: IDR ${t.total.toLocaleString()}`;
+    openModal('voidModal');
+}
+
+function confirmVoid() {
+    const tx = TRANSACTIONS.find(t=>t.id===voidTarget);
+    if (tx) tx.status = 'VOID';
+    filteredTx = [...TRANSACTIONS];
+    renderTable(filteredTx, currentPage);
+    closeModal('voidModal');
+    showToast('Transaction voided.','success');
+}
+
+function downloadVoidReport() {
+    const voidData = filteredTx.filter(t => t.status === 'VOID');
+    if (voidData.length === 0) {
+        showToast('No void transactions found in current filter.', 'error');
+        return;
+    }
+    let csv = '"No","Date","Invoice","Member","Amount","Status","Channel","Gym"\n';
+    voidData.forEach((t, i) => {
+        csv += `"${i+1}","${t.date}","${t.invoice}","${t.member}","${t.total}","${t.status}","${t.channel}","${t.gym}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'void_transactions_report.csv';
+    a.click();
+    showToast('Void report downloaded.', 'success');
+}
+
+function showTxDetail(t) {
+    document.getElementById('txDetailContent').innerHTML = `
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="text-gray-400 uppercase text-[10px] font-bold tracking-widest">Invoice</div>
+            <div class="font-bold text-violet-600 font-mono">${t.invoice}</div>
+            <div class="text-gray-400 uppercase text-[10px] font-bold tracking-widest">Date</div>
+            <div class="font-bold text-slate-800">${t.date}</div>
+            <div class="text-gray-400 uppercase text-[10px] font-bold tracking-widest">Member</div>
+            <div class="font-bold text-slate-800">${t.member}</div>
+            <div class="text-gray-400 uppercase text-[10px] font-bold tracking-widest">Total</div>
+            <div class="font-bold text-slate-900 font-mono text-lg">IDR ${t.total.toLocaleString()}</div>
+            <div class="text-gray-400 uppercase text-[10px] font-bold tracking-widest">Status</div>
+            <div>${statusBadge(t.status)}</div>
+            <div class="text-gray-400 uppercase text-[10px] font-bold tracking-widest">Channel</div>
+            <div><span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wide">${t.channel}</span></div>
+            <div class="text-gray-400 uppercase text-[10px] font-bold tracking-widest">Gym</div>
+            <div class="font-medium text-gray-600">${t.gym}</div>
+        </div>
+    `;
+    openModal('txDetailModal');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderTable(TRANSACTIONS, 1);
+});
 </script>
 </body>
 </html>
