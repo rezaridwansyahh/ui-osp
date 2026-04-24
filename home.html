@@ -27,7 +27,6 @@ tailwind.config = {
   <!-- Overlay sidebar buat mobile -->
   <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleSidebar()"></div>
 
-  <!-- Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-800 z-50 transform -translate-x-full lg:translate-x-0 lg:static lg:z-auto transition-transform duration-300 ease-in-out flex flex-col flex-shrink-0">
     <!-- Logo -->
     <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-700 flex-shrink-0">
@@ -35,7 +34,6 @@ tailwind.config = {
       <span class="text-white font-bold text-lg tracking-tight">OSP</span>
     </div>
 
-    <!-- Profile Card -->
     <div class="mx-3 mt-4 mb-2 p-3 bg-slate-700/50 rounded-xl flex items-center gap-3">
       <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-400 rounded-full flex items-center justify-center flex-shrink-0">
         <i data-lucide="user" class="w-5 h-5 text-white"></i>
@@ -46,14 +44,12 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- Navigasi -->
     <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-1 sidebar-scrollbar">
       <a href="home.html" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-white/10 text-white">
         <i data-lucide="home" class="w-[18px] h-[18px] flex-shrink-0"></i>
         Home
       </a>
 
-      <!-- Manage Merchant -->
       <div>
         <button data-menu-toggle="sub-merchant" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
           <span class="flex items-center gap-3">
@@ -71,7 +67,6 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Package & Product -->
       <div>
         <button data-menu-toggle="sub-package" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
           <span class="flex items-center gap-3">
@@ -87,7 +82,6 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Report -->
       <div>
         <button data-menu-toggle="sub-report" class="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
           <span class="flex items-center gap-3">
@@ -105,7 +99,6 @@ tailwind.config = {
     </nav>
   </aside>
 
-  <!-- Main wrapper -->
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
     <!-- Navbar -->
     <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 shadow-sm">
@@ -133,7 +126,6 @@ tailwind.config = {
       </div>
     </header>
 
-    <!-- Konten Utama -->
     <main class="flex-1 overflow-y-auto bg-gray-50 p-4 lg:p-6">
       <!-- Welcome Banner -->
       <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 p-6 lg:p-8 mb-5 shadow-lg">
@@ -157,7 +149,6 @@ tailwind.config = {
             </div>
           </div>
 
-          <!-- Kanan: info cards -->
           <div class="grid grid-cols-2 gap-3 lg:gap-4">
             <div class="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
               <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">User ID</p>
@@ -181,9 +172,7 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Stat Cards dengan Mini Sparkline -->
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
-        <!-- New Members -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
           <div>
             <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">New Members</p>
@@ -192,7 +181,6 @@ tailwind.config = {
           </div>
           <div id="sparkNew" class="flex-shrink-0"></div>
         </div>
-        <!-- Total Active -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
           <div>
             <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Total Active</p>
@@ -201,7 +189,6 @@ tailwind.config = {
           </div>
           <div id="sparkActive" class="flex-shrink-0"></div>
         </div>
-        <!-- Defaulted -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
           <div>
             <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Defaulted</p>
@@ -210,7 +197,6 @@ tailwind.config = {
           </div>
           <div id="sparkDefaulted" class="flex-shrink-0"></div>
         </div>
-        <!-- Freeze -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
           <div>
             <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Freeze</p>
@@ -221,7 +207,6 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Chart Row 1: Trend + Donut -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
         <!-- Area Chart - New Members Trend -->
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
@@ -229,7 +214,6 @@ tailwind.config = {
           <p class="text-xs text-gray-400 mb-3">Jumlah pendaftaran member baru per bulan</p>
           <div id="chartMemberTrend"></div>
         </div>
-        <!-- Donut - Member Status -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h3 class="text-sm font-semibold text-gray-800 mb-1">Member Status</h3>
           <p class="text-xs text-gray-400 mb-3">Distribusi status seluruh member</p>
@@ -237,7 +221,6 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Chart Row 2: Bar + Radial -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <!-- Bar Chart - Payment Type -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
@@ -245,7 +228,6 @@ tailwind.config = {
           <p class="text-xs text-gray-400 mb-3">Perbandingan member EFT vs PIF</p>
           <div id="chartPaymentType"></div>
         </div>
-        <!-- Radial Bar - Gender -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h3 class="text-sm font-semibold text-gray-800 mb-1">Gender Distribution</h3>
           <p class="text-xs text-gray-400 mb-3">Proporsi gender dari total member aktif</p>
@@ -256,7 +238,6 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- User Profile Modal -->
 <div class="modal-overlay hidden" id="userProfileModal">
   <div class="modal-box" style="max-width: 640px;">
     <div class="modal-title">OSP Kemang @ AF Kemang</div>

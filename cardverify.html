@@ -21,19 +21,16 @@ tailwind.config = {
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
-/* Upload zone drag state */
 .upload-area { transition: border-color 0.2s, background 0.2s; }
 .upload-area.drag-over { border-color: #7c3aed !important; background: rgba(124,58,237,0.04) !important; }
 
-/* File preview slide-in */
+
 .file-card { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease; margin-top: 0; }
 .file-card.visible { max-height: 120px; opacity: 1; margin-top: 16px; }
 
-/* Progress bar animation */
 @keyframes progressFill { from { width: 0; } to { width: 100%; } }
 .progress-fill { animation: progressFill 0.8s ease-out forwards; }
 
-/* Confirmation modal */
 .confirm-overlay { opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
 .confirm-overlay.open { opacity: 1; pointer-events: auto; }
 .confirm-box { transform: scale(0.95) translateY(8px); transition: transform 0.2s ease; }
@@ -44,7 +41,6 @@ tailwind.config = {
 <div class="flex h-screen">
   <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleSidebar()"></div>
 
-  <!-- Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-800 z-50 transform -translate-x-full lg:translate-x-0 lg:static lg:z-auto transition-transform duration-300 ease-in-out flex flex-col flex-shrink-0">
     <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-700 flex-shrink-0">
       <img src="assets/logo osp.png" alt="Logo OSP" class="h-8 w-auto">
@@ -122,11 +118,9 @@ tailwind.config = {
       </div>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-1 overflow-y-auto bg-gray-50">
       <div class="p-4 lg:p-6 space-y-5">
 
-        <!-- Step Indicator -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div class="flex items-center justify-between">
             <!-- Step 1 -->
@@ -139,11 +133,9 @@ tailwind.config = {
                 <p class="text-[11px] text-gray-500">Download Template</p>
               </div>
             </div>
-            <!-- Connector -->
             <div class="flex-1 mx-3 h-0.5 bg-gray-200 rounded-full relative">
               <div class="absolute inset-y-0 left-0 bg-violet-600 rounded-full transition-all duration-500" id="connector1" style="width:0%"></div>
             </div>
-            <!-- Step 2 -->
             <div class="flex items-center gap-2.5" id="step2">
               <div class="w-9 h-9 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0 transition-colors" id="step2Circle">
                 <i data-lucide="upload-cloud" class="w-4 h-4"></i>
@@ -153,11 +145,9 @@ tailwind.config = {
                 <p class="text-[11px] text-gray-500">Upload File</p>
               </div>
             </div>
-            <!-- Connector -->
             <div class="flex-1 mx-3 h-0.5 bg-gray-200 rounded-full relative">
               <div class="absolute inset-y-0 left-0 bg-violet-600 rounded-full transition-all duration-500" id="connector2" style="width:0%"></div>
             </div>
-            <!-- Step 3 -->
             <div class="flex items-center gap-2.5" id="step3">
               <div class="w-9 h-9 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0 transition-colors" id="step3Circle">
                 <i data-lucide="check-circle" class="w-4 h-4"></i>
@@ -170,7 +160,6 @@ tailwind.config = {
           </div>
         </div>
 
-        <!-- Download Template Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div class="flex flex-col sm:flex-row sm:items-center gap-4">
             <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -193,11 +182,9 @@ tailwind.config = {
           </div>
         </div>
 
-        <!-- Upload Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h3 class="text-sm font-bold text-gray-900 mb-4">Upload Card Verify File</h3>
 
-          <!-- Upload Zone -->
           <div class="upload-area border-2 border-dashed border-gray-200 rounded-xl p-8 sm:p-12 text-center cursor-pointer hover:border-violet-300 hover:bg-violet-50/30"
                id="uploadZone"
                onclick="document.getElementById('fileInput').click()"
@@ -217,7 +204,6 @@ tailwind.config = {
             </div>
           </div>
 
-          <!-- File Preview Card (hidden by default) -->
           <div class="file-card" id="filePreview">
             <div class="flex items-center gap-3 p-3.5 bg-gray-50 rounded-xl border border-gray-100">
               <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -241,7 +227,6 @@ tailwind.config = {
             </div>
           </div>
 
-          <!-- Action Buttons -->
           <div class="flex items-center gap-3 mt-5">
             <button id="submitBtn" onclick="submitFile()" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-violet-600" disabled>
               <i data-lucide="send" class="w-4 h-4"></i>
@@ -260,7 +245,6 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- Confirmation Modal -->
 <div class="confirm-overlay fixed inset-0 bg-black/40 z-[999] flex items-center justify-center p-4" id="confirmModal">
   <div class="confirm-box bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
     <div class="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -283,7 +267,6 @@ tailwind.config = {
 <script>
 let selectedFile = null;
 
-// Step indicator
 function updateSteps(step) {
   const colors = { active: 'bg-violet-600 text-white', done: 'bg-emerald-500 text-white', inactive: 'bg-gray-200 text-gray-400' };
   const labelColors = { active: 'text-violet-600', done: 'text-emerald-600', inactive: 'text-gray-400' };
@@ -291,7 +274,6 @@ function updateSteps(step) {
   [1, 2, 3].forEach(i => {
     const circle = document.getElementById('step' + i + 'Circle');
     const label = document.getElementById('step' + i + 'Label');
-    // Hapus semua class warna
     circle.className = circle.className.replace(/bg-\S+|text-\S+/g, '').trim();
     label.className = label.className.replace(/text-\S+/g, '').trim();
 
@@ -304,7 +286,6 @@ function updateSteps(step) {
     label.classList.add(labelColors[state], 'text-xs', 'font-semibold', 'transition-colors');
   });
 
-  // Connector progress
   document.getElementById('connector1').style.width = step > 1 ? '100%' : '0%';
   document.getElementById('connector2').style.width = step > 2 ? '100%' : '0%';
 }
@@ -369,7 +350,6 @@ function formatBytes(b) {
   return (b / 1048576).toFixed(1) + ' MB';
 }
 
-// Init
 updateSteps(1);
 </script>
 </body>

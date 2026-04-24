@@ -1,8 +1,3 @@
-/* ============================================================
-   OSP Home Dashboard - ApexCharts
-   ============================================================ */
-
-// ── Opsi dasar buat konsistensi semua chart ──
 const fontFamily = 'IBM Plex Sans, sans-serif';
 const baseChartOpts = {
   chart: { fontFamily, toolbar: { show: false } },
@@ -36,13 +31,11 @@ function createSparkline(selector, data, color) {
   }).render();
 }
 
-// ── 4 Sparkline di stat cards ──
 createSparkline('#sparkNew',       [18, 22, 30, 25, 38, 35, 28, 40, 33, 37, 42, 45], '#3b82f6');
 createSparkline('#sparkActive',    [820, 860, 890, 920, 950, 970, 990, 1010, 1020, 1035, 1048, 1054], '#10b981');
 createSparkline('#sparkDefaulted', [4200, 4250, 4300, 4350, 4380, 4420, 4460, 4490, 4520, 4540, 4560, 4579], '#ef4444');
 createSparkline('#sparkFreeze',    [70, 65, 60, 72, 68, 55, 58, 62, 50, 48, 55, 52], '#f59e0b');
 
-// ── Area Chart: New Members Trend (12 bulan terakhir) ──
 new ApexCharts(document.querySelector('#chartMemberTrend'), {
   ...baseChartOpts,
   chart: {
@@ -85,7 +78,6 @@ new ApexCharts(document.querySelector('#chartMemberTrend'), {
   },
 }).render();
 
-// ── Donut Chart: Member Status ──
 new ApexCharts(document.querySelector('#chartMemberStatus'), {
   ...baseChartOpts,
   chart: {
@@ -128,7 +120,6 @@ new ApexCharts(document.querySelector('#chartMemberStatus'), {
   },
 }).render();
 
-// ── Bar Chart: Payment Type (EFT vs PIF) ──
 new ApexCharts(document.querySelector('#chartPaymentType'), {
   ...baseChartOpts,
   chart: {
@@ -175,7 +166,6 @@ new ApexCharts(document.querySelector('#chartPaymentType'), {
   },
 }).render();
 
-// ── Radial Bar: Gender Distribution ──
 const totalGender = 719 + 499;
 const malePct = Math.round((719 / totalGender) * 100);
 const femalePct = Math.round((499 / totalGender) * 100);

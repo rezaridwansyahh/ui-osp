@@ -1,8 +1,3 @@
-/* ============================================================
-   OSP UI - Shared JavaScript Utilities
-   ============================================================ */
-
-// ── Sidebar accordion (menu toggle) ──────────────────────────
 function initSidebar() {
   document.querySelectorAll('[data-menu-toggle]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -11,11 +6,9 @@ function initSidebar() {
       if (!sub) return;
       const isOpen = sub.classList.contains('open');
 
-      // Tutup semua submenu
       document.querySelectorAll('.menu-sub').forEach(s => s.classList.remove('open'));
       document.querySelectorAll('[data-menu-toggle]').forEach(b => b.classList.remove('open'));
 
-      // Toggle yang diklik
       if (!isOpen) {
         sub.classList.add('open');
         btn.classList.add('open');
@@ -23,7 +16,6 @@ function initSidebar() {
     });
   });
 
-  // Auto-open parent dari sub-link yang aktif
   document.querySelectorAll('.menu-sub-link.active').forEach(link => {
     const sub = link.closest('.menu-sub');
     if (sub) {
@@ -34,7 +26,6 @@ function initSidebar() {
   });
 }
 
-// ── Toggle sidebar mobile ────────────────────────────────────
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
@@ -51,7 +42,6 @@ function toggleSidebar() {
   }
 }
 
-// Auto-close sidebar saat resize ke desktop
 window.addEventListener('resize', () => {
   if (window.innerWidth >= 1024) {
     const overlay = document.getElementById('sidebarOverlay');
@@ -64,7 +54,6 @@ window.addEventListener('resize', () => {
   }
 });
 
-// ── Toast notification ─────────────────────────────────────
 function showToast(msg, type = '') {
   const existing = document.querySelector('.toast');
   if (existing) existing.remove();
@@ -75,7 +64,6 @@ function showToast(msg, type = '') {
   setTimeout(() => t.remove(), 3000);
 }
 
-// ── Modal helpers ───────────────────────────────────────────
 function openModal(id) {
   const m = document.getElementById(id);
   if (m) { m.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
@@ -92,13 +80,11 @@ document.addEventListener('click', e => {
   }
 });
 
-// ── Filter panel toggle ─────────────────────────────────────
 function toggleFilter(id) {
   const panel = document.getElementById(id);
   if (panel) panel.classList.toggle('open');
 }
 
-// ── Generic table search ────────────────────────────────────
 function tableSearch(inputId, tableId) {
   const input = document.getElementById(inputId);
   if (!input) return;
@@ -116,7 +102,6 @@ function tableSearch(inputId, tableId) {
   });
 }
 
-// ── Sort table column ───────────────────────────────────────
 function sortTable(tableId, colIndex, btn) {
   const table = document.getElementById(tableId);
   const tbody = table.querySelector('tbody');
@@ -132,7 +117,6 @@ function sortTable(tableId, colIndex, btn) {
   rows.forEach(r => tbody.appendChild(r));
 }
 
-// ── CSV export (download) ───────────────────────────────────
 function exportCSV(tableId, filename) {
   const table = document.getElementById(tableId);
   if (!table) return;
@@ -150,7 +134,6 @@ function exportCSV(tableId, filename) {
   showToast('Downloaded ' + (filename || 'export.csv'), 'success');
 }
 
-// ── On DOM ready ────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initSidebar();
   if (typeof lucide !== 'undefined') lucide.createIcons();
