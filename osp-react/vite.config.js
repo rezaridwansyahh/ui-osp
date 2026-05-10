@@ -8,4 +8,14 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    // Proxy API biar gak kena CORS pas development
+    proxy: {
+      '/api': {
+        target: 'https://dev.osp.id/pos-backend',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 })

@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Store, Package, BarChart3, ChevronDown, User } from 'lucide-react';
 import { SIDEBAR_NAV } from '../../utils/constants';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ICON_MAP = { Home, Store, Package, BarChart3 };
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
+  const { user } = useAuth();
   const [openMenus, setOpenMenus] = useState({});
 
   // Auto-buka menu yg punya child aktif
@@ -54,8 +56,8 @@ export default function Sidebar({ isOpen, onClose }) {
             <User className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
-            <div className="text-white text-sm font-semibold truncate">osp_kemang</div>
-            <div className="text-slate-400 text-xs uppercase tracking-wider">MERCHANT</div>
+            <div className="text-white text-sm font-semibold truncate">{user?.name || 'Guest'}</div>
+            <div className="text-slate-400 text-xs uppercase tracking-wider">{user?.role || 'USER'}</div>
           </div>
         </div>
 

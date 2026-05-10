@@ -1,10 +1,18 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, Power, Maximize, UserCircle, KeyRound, ChevronRight } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, Power, Maximize, UserCircle, LogOut, ChevronRight } from 'lucide-react';
 import { BREADCRUMBS } from '../../utils/constants';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Navbar({ onToggleSidebar }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const crumbs = BREADCRUMBS[location.pathname] || [{ label: 'Home' }];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 shadow-sm">
@@ -52,8 +60,12 @@ export default function Navbar({ onToggleSidebar }) {
         <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Profile">
           <UserCircle className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
         </button>
-        <button className="p-2 rounded-lg hover:bg-red-50 transition-colors group" title="Auth">
-          <KeyRound className="w-5 h-5 text-red-400 group-hover:text-red-600" />
+        <button
+          onClick={handleLogout}
+          className="p-2 rounded-lg hover:bg-red-50 transition-colors group"
+          title="Logout"
+        >
+          <LogOut className="w-5 h-5 text-red-400 group-hover:text-red-600" />
         </button>
       </div>
     </header>
