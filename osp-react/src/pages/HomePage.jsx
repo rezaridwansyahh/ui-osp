@@ -6,6 +6,7 @@ import {
   UserX,
   Snowflake,
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 // Sama kayak home-charts.js — font buat semua chart
 const fontFamily = 'IBM Plex Sans, sans-serif';
@@ -317,8 +318,24 @@ function SparkStatChart({ data, color }) {
   return <Chart options={options} series={series} type="area" height={50} width={90} />;
 }
 
-// Banner sambutan — kelas sama persis home.html
-function WelcomeBanner() {
+// Format tanggal login jadi "13 May, 14:16"
+function formatLoginTime(date) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const d = date instanceof Date ? date : new Date(date);
+  const day = d.getDate();
+  const month = months[d.getMonth()];
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day} ${month}, ${hours}:${minutes}`;
+}
+
+function WelcomeBanner({ user }) {
+  const displayName = user?.name || user?.username || 'Guest';
+  const userId = user?.id || '-';
+  const role = user?.role || 'USER';
+  const gymName = user?.gymName || user?.gymList?.[0]?.name || '-';
+  const loginTime = formatLoginTime(new Date());
+
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 p-6 lg:p-8 mb-5 shadow-lg">
       <div className="absolute inset-0 opacity-[0.07]" style={bannerPatternStyle} />
@@ -327,7 +344,7 @@ function WelcomeBanner() {
 
       <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
         <div className="flex items-start gap-4">
-          <div className="hidden sm:flex w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/25">
+          <div className="hidden sm:flex w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 items-center justify-center shrink-0 shadow-lg shadow-blue-500/25">
             <LayoutDashboard className="w-7 h-7 text-white" />
           </div>
           <div>
@@ -335,34 +352,31 @@ function WelcomeBanner() {
             <h1 className="text-2xl lg:text-3xl font-bold text-white">
               Welcome back,{' '}
               <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-                osp_kemang
+                {displayName}
               </span>
             </h1>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 lg:gap-4">
-          <div className="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">User ID</p>
-            <p className="text-white font-bold text-sm mt-0.5">803</p>
-          </div>
-          <div className="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Access Type</p>
-            <p className="text-white font-bold text-sm mt-0.5 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              MERCHANT
-            </p>
-          </div>
-          <div className="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Gym Access</p>
-            <p className="text-white font-bold text-sm mt-0.5">AF Kemang</p>
-          </div>
-          <div className="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Login Time</p>
-            <p className="text-white font-bold text-sm mt-0.5">15 Apr, 04:42</p>
-          </div>
+          <InfoBubble label="User ID" value={userId} />
+          <InfoBubble label="Access Type" value={role} withDot />
+          <InfoBubble label="Gym Access" value={gymName} />
+          <InfoBubble label="Login Time" value={loginTime} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function InfoBubble({ label, value, withDot = false }) {
+  return (
+    <div className="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
+      <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">{label}</p>
+      <p className="text-white font-bold text-sm mt-0.5 flex items-center gap-1.5">
+        {withDot && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+        {value}
+      </p>
     </div>
   );
 }
@@ -440,9 +454,11 @@ function ChartsRowPaymentAndGender() {
 }
 
 export default function HomePage() {
+  const { user } = useAuth();
+
   return (
     <div className="p-4 lg:p-6">
-      <WelcomeBanner />
+      <WelcomeBanner user={user} />
       <StatCardsSection />
       <ChartsRowTrendAndStatus />
       <ChartsRowPaymentAndGender />

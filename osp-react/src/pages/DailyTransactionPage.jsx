@@ -1,11 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Download, SlidersHorizontal, FileX, Eye, X } from 'lucide-react';
-import {
-  TRANSACTIONS,
-  TRANSACTION_CHANNELS,
-  TRANSACTION_STATUSES,
-  GYMS,
-} from '../data/transactions';
+import { Download, SlidersHorizontal, FileX, Eye, X, RefreshCw, Loader2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import useOrders from '../hooks/useOrders';
 import { useShowToast } from '../contexts/ToastContext';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -17,21 +13,31 @@ import { exportTableToCSV, formatIDR } from '../utils/helpers';
 const PAGE_SIZE = 8;
 
 const EMPTY_FILTERS = {
-  dateFrom: '',
-  dateTo: '',
   member: '',
   invoice: '',
   status: '',
   channel: '',
-  gym: '',
 };
 
-// Halaman transaksi harian — konversi dari dailytransaction.html:
-// toolbar, filter collapsible, tabel custom + pagination, modal void & detail
 export default function DailyTransactionPage() {
   const showToast = useShowToast();
+  const { user } = useAuth();
 
-  // Status VOID dari aksi user (map id -> status), tanpa mutasi TRANSACTIONS asli
+  // Ambil gymList dari user buat dropdown filter gym
+  const gymList = user?.gymList ?? [];
+  const defaultGymId = user?.gymId ?? -1;
+
+  const {
+    orders,
+    loading,
+    error,
+    refetch,
+    gymId,
+    setGymId,
+    dateRange,
+    setDateRange,
+  } = useOrders(defaultGymId);
+
   const [statusOverrides, setStatusOverrides] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -40,30 +46,33 @@ export default function DailyTransactionPage() {
   const [sortField, setSortField] = useState('date');
   const [sortDir, setSortDir] = useState('desc');
   const [page, setPage] = useState(1);
-
   const [voidTarget, setVoidTarget] = useState(null);
   const [detailTransaction, setDetailTransaction] = useState(null);
 
+  // Gabung data API dengan override status (VOID)
   const rowsWithOverrides = useMemo(
-    () =>
-      TRANSACTIONS.map((t) => ({
-        ...t,
-        status: statusOverrides[t.id] ?? t.status,
-      })),
-    [statusOverrides]
+    () => orders.map((t) => ({ ...t, status: statusOverrides[t.id] ?? t.status })),
+    [orders, statusOverrides]
+  );
+
+  // Kumpulkan unique values dari data buat opsi filter
+  const uniqueChannels = useMemo(
+    () => [...new Set(orders.map((o) => o.channel).filter(Boolean))].sort(),
+    [orders]
+  );
+  const uniqueStatuses = useMemo(
+    () => [...new Set(orders.map((o) => o.status).filter(Boolean))].sort(),
+    [orders]
   );
 
   function rowMatchesApplied(t) {
     const f = appliedFilters;
-    if (f.dateFrom && t.date < f.dateFrom) return false;
-    if (f.dateTo && t.date > f.dateTo) return false;
     const memberQ = f.member.toLowerCase().trim();
     if (memberQ && !t.member.toLowerCase().includes(memberQ)) return false;
     const invQ = f.invoice.toLowerCase().trim();
     if (invQ && !t.invoice.toLowerCase().includes(invQ)) return false;
     if (f.status && t.status !== f.status) return false;
     if (f.channel && t.channel !== f.channel) return false;
-    if (f.gym && t.gym !== f.gym) return false;
     return true;
   }
 
@@ -83,12 +92,8 @@ export default function DailyTransactionPage() {
 
     const dir = sortDir === 'asc' ? 1 : -1;
     list = [...list].sort((a, b) => {
-      if (sortField === 'date') {
-        return a.date.localeCompare(b.date) * dir;
-      }
-      if (sortField === 'invoice') {
-        return a.invoice.localeCompare(b.invoice) * dir;
-      }
+      if (sortField === 'date') return String(a.date).localeCompare(String(b.date)) * dir;
+      if (sortField === 'invoice') return String(a.invoice).localeCompare(String(b.invoice)) * dir;
       return 0;
     });
 
@@ -130,17 +135,22 @@ export default function DailyTransactionPage() {
     setPage(1);
   }
 
+  // Ganti gym → trigger refetch otomatis lewat useOrders
+  function handleGymChange(newGymId) {
+    setGymId(Number(newGymId));
+    setPage(1);
+  }
+
+  // Ganti date range → trigger refetch otomatis
+  function handleDateRangeChange(field, value) {
+    setDateRange((prev) => ({ ...prev, [field]: value }));
+    setPage(1);
+  }
+
   function handleExportTable() {
     const headers = ['No.', 'Date', 'Invoice', 'Member', 'Amount', 'Status', 'Channel', 'Gym'];
     const rows = filteredSorted.map((t, i) => [
-      i + 1,
-      t.date,
-      t.invoice,
-      t.member,
-      t.total,
-      t.status,
-      t.channel,
-      t.gym,
+      i + 1, t.date, t.invoice, t.member, t.total, t.status, t.channel, t.gym,
     ]);
     exportTableToCSV(headers, rows, 'daily_transaction.csv');
     showToast('Export berhasil', 'success');
@@ -154,14 +164,7 @@ export default function DailyTransactionPage() {
     }
     const headers = ['No', 'Date', 'Invoice', 'Member', 'Amount', 'Status', 'Channel', 'Gym'];
     const rows = voidRows.map((t, i) => [
-      i + 1,
-      t.date,
-      t.invoice,
-      t.member,
-      t.total,
-      t.status,
-      t.channel,
-      t.gym,
+      i + 1, t.date, t.invoice, t.member, t.total, t.status, t.channel, t.gym,
     ]);
     exportTableToCSV(headers, rows, 'void_transactions_report.csv');
     showToast('Laporan VOID diunduh.', 'success');
@@ -179,6 +182,18 @@ export default function DailyTransactionPage() {
 
   return (
     <div className="p-4 lg:p-6">
+      {/* API Controls: gym selector + date range + refresh */}
+      <ApiControlBar
+        gymId={gymId}
+        gymList={gymList}
+        dateRange={dateRange}
+        loading={loading}
+        onGymChange={handleGymChange}
+        onDateChange={handleDateRangeChange}
+        onRefresh={refetch}
+      />
+
+      {/* Toolbar: export, filter toggle, search */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-2 flex-wrap">
@@ -212,134 +227,49 @@ export default function DailyTransactionPage() {
           </div>
         </div>
 
-        {/* Panel filter bisa di-toggle (violet toolbar) */}
-        <div
-          className={`mt-4 pt-4 border-t border-gray-100 ${filterOpen ? '' : 'hidden'}`}
-        >
+        {/* Panel filter */}
+        <div className={`mt-4 pt-4 border-t border-gray-100 ${filterOpen ? '' : 'hidden'}`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                Date From
-              </label>
-              <input
-                type="date"
-                value={filterDraft.dateFrom}
-                onChange={(e) =>
-                  setFilterDraft((d) => ({ ...d, dateFrom: e.target.value }))
-                }
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                Date To
-              </label>
-              <input
-                type="date"
-                value={filterDraft.dateTo}
-                onChange={(e) =>
-                  setFilterDraft((d) => ({ ...d, dateTo: e.target.value }))
-                }
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                Member Name / ID
-              </label>
-              <input
-                type="text"
-                value={filterDraft.member}
-                onChange={(e) =>
-                  setFilterDraft((d) => ({ ...d, member: e.target.value }))
-                }
-                placeholder="Search member..."
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                Invoice No
-              </label>
-              <input
-                type="text"
-                value={filterDraft.invoice}
-                onChange={(e) =>
-                  setFilterDraft((d) => ({ ...d, invoice: e.target.value }))
-                }
-                placeholder="INV-..."
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                Status
-              </label>
-              <select
-                value={filterDraft.status}
-                onChange={(e) =>
-                  setFilterDraft((d) => ({ ...d, status: e.target.value }))
-                }
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
-              >
-                <option value="">All Status</option>
-                {TRANSACTION_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                Channel
-              </label>
-              <select
-                value={filterDraft.channel}
-                onChange={(e) =>
-                  setFilterDraft((d) => ({ ...d, channel: e.target.value }))
-                }
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
-              >
-                <option value="">All Channel</option>
-                {TRANSACTION_CHANNELS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                Gym
-              </label>
-              <select
-                value={filterDraft.gym}
-                onChange={(e) =>
-                  setFilterDraft((d) => ({ ...d, gym: e.target.value }))
-                }
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
-              >
-                <option value="">All Gyms</option>
-                {GYMS.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end gap-2">
+            <FilterInput
+              label="Member Name / ID"
+              type="text"
+              placeholder="Search member..."
+              value={filterDraft.member}
+              onChange={(v) => setFilterDraft((d) => ({ ...d, member: v }))}
+            />
+            <FilterInput
+              label="Invoice No"
+              type="text"
+              placeholder="INV-..."
+              value={filterDraft.invoice}
+              onChange={(v) => setFilterDraft((d) => ({ ...d, invoice: v }))}
+            />
+            <FilterSelect
+              label="Status"
+              value={filterDraft.status}
+              options={uniqueStatuses}
+              placeholder="All Status"
+              onChange={(v) => setFilterDraft((d) => ({ ...d, status: v }))}
+            />
+            <FilterSelect
+              label="Channel"
+              value={filterDraft.channel}
+              options={uniqueChannels}
+              placeholder="All Channel"
+              onChange={(v) => setFilterDraft((d) => ({ ...d, channel: v }))}
+            />
+            <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="flex-1 px-4 py-2 text-sm font-semibold text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1 max-w-[160px] px-4 py-2 text-sm font-semibold text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 Reset
               </button>
               <button
                 type="button"
                 onClick={handleApplyFilters}
-                className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm transition-colors"
+                className="flex-1 max-w-[160px] px-4 py-2 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm transition-colors"
               >
                 Apply Filter
               </button>
@@ -348,114 +278,81 @@ export default function DailyTransactionPage() {
         </div>
       </div>
 
-      {/* Tabel custom (tanpa DataTable) + pagination manual */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50 border-b border-gray-100">
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  No.
-                </th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort('date')}
-                    className="cursor-pointer hover:text-violet-600 font-bold uppercase tracking-widest text-[11px] text-slate-400"
-                  >
-                    Date{sortHint('date')}
-                  </button>
-                </th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort('invoice')}
-                    className="cursor-pointer hover:text-violet-600 font-bold uppercase tracking-widest text-[11px] text-slate-400"
-                  >
-                    Invoice{sortHint('invoice')}
-                  </button>
-                </th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Member
-                </th>
-                <th className="px-6 py-4 text-right text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Amount
-                </th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">
-                  Channel
-                </th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 text-sm">
-              {pagedRows.map((t, i) => {
-                const rowNo = (displayPage - 1) * PAGE_SIZE + i + 1;
-                return (
-                  <tr
-                    key={t.id}
-                    className="hover:bg-violet-50/30 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-gray-400 font-medium">{rowNo}</td>
-                    <td className="px-6 py-4 font-semibold text-gray-600">{t.date}</td>
-                    <td className="px-6 py-4 font-mono font-bold text-violet-600">
-                      {t.invoice}
-                    </td>
-                    <td className="px-6 py-4 font-bold text-slate-800">{t.member}</td>
-                    <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">
-                      {formatIDR(t.total)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge status={t.status} />
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wide">
-                        {t.channel}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setDetailTransaction(t)}
-                          className="p-2 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all"
-                          aria-label="Detail transaksi"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={t.status === 'VOID'}
-                          onClick={() => setVoidTarget(t)}
-                          className="px-2 py-1 text-[10px] font-bold border border-red-200 text-red-500 rounded hover:bg-red-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          Void
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Tabel / Loading / Error */}
+      {loading ? (
+        <LoadingState />
+      ) : error ? (
+        <ErrorState message={error} onRetry={refetch} />
+      ) : orders.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50 border-b border-gray-100">
+                  <Th>No.</Th>
+                  <Th sortable onClick={() => toggleSort('date')}>Date{sortHint('date')}</Th>
+                  <Th sortable onClick={() => toggleSort('invoice')}>Invoice{sortHint('invoice')}</Th>
+                  <Th>Member</Th>
+                  <Th className="text-right">Amount</Th>
+                  <Th>Status</Th>
+                  <Th className="text-center">Channel</Th>
+                  <Th className="text-center">Action</Th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 text-sm">
+                {pagedRows.map((t, i) => {
+                  const rowNo = (displayPage - 1) * PAGE_SIZE + i + 1;
+                  return (
+                    <tr key={t.id} className="hover:bg-violet-50/30 transition-colors">
+                      <td className="px-6 py-4 text-gray-400 font-medium">{rowNo}</td>
+                      <td className="px-6 py-4 font-semibold text-gray-600">{t.date}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-violet-600">{t.invoice}</td>
+                      <td className="px-6 py-4 font-bold text-slate-800">{t.member}</td>
+                      <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">
+                        {formatIDR(t.total)}
+                      </td>
+                      <td className="px-6 py-4"><Badge status={t.status} /></td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wide">
+                          {t.channel}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setDetailTransaction(t)}
+                            className="p-2 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all"
+                            aria-label="Detail transaksi"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={t.status === 'VOID'}
+                            onClick={() => setVoidTarget(t)}
+                            className="px-2 py-1 text-[10px] font-bold border border-red-200 text-red-500 rounded hover:bg-red-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            Void
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-6 py-4 bg-slate-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <span className="text-xs text-slate-400 font-medium">
+              Total: <span className="text-slate-900 font-bold">{filteredSorted.length}</span> records found
+            </span>
+            <Pagination currentPage={displayPage} totalPages={totalPages} onPageChange={setPage} />
+          </div>
         </div>
-        <div className="px-6 py-4 bg-slate-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span className="text-xs text-slate-400 font-medium">
-            Total:{' '}
-            <span className="text-slate-900 font-bold">{filteredSorted.length}</span>{' '}
-            records found
-          </span>
-          <Pagination
-            currentPage={displayPage}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
-        </div>
-      </div>
+      )}
 
       {/* Modal konfirmasi VOID */}
       <Modal
@@ -465,18 +362,12 @@ export default function DailyTransactionPage() {
         maxWidth="max-w-sm"
         footer={
           <>
-            <Button variant="outline" className="flex-1" onClick={() => setVoidTarget(null)}>
-              Cancel
-            </Button>
-            <Button variant="danger" className="flex-1" onClick={confirmVoid}>
-              Void Transaction
-            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setVoidTarget(null)}>Cancel</Button>
+            <Button variant="danger" className="flex-1" onClick={confirmVoid}>Void Transaction</Button>
           </>
         }
       >
-        <p className="text-sm text-gray-600 mb-4">
-          Are you sure you want to void this transaction?
-        </p>
+        <p className="text-sm text-gray-600 mb-4">Are you sure you want to void this transaction?</p>
         {voidTarget && (
           <div className="p-3 bg-gray-50 rounded-xl text-xs font-medium text-gray-700 space-y-1">
             <div className="font-bold">{voidTarget.invoice}</div>
@@ -486,67 +377,203 @@ export default function DailyTransactionPage() {
         )}
       </Modal>
 
-      {/* Modal detail: grid 2 kolom, semua field transaksi */}
+      {/* Modal detail */}
       <Modal
         isOpen={!!detailTransaction}
         onClose={() => setDetailTransaction(null)}
         title="Transaction Detail"
         maxWidth="max-w-md"
         footer={
-          <Button variant="outline" onClick={() => setDetailTransaction(null)}>
-            Close
-          </Button>
+          <Button variant="outline" onClick={() => setDetailTransaction(null)}>Close</Button>
         }
       >
         {detailTransaction && (
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-              Transaction ID
-            </div>
-            <div className="font-mono font-bold text-slate-800">{detailTransaction.id}</div>
-            <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-              Invoice
-            </div>
-            <div className="font-bold text-violet-600 font-mono">{detailTransaction.invoice}</div>
-            <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-              Date
-            </div>
-            <div className="font-bold text-slate-800">{detailTransaction.date}</div>
-            <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-              Member
-            </div>
-            <div className="font-bold text-slate-800">{detailTransaction.member}</div>
-            <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-              Total
-            </div>
-            <div className="font-bold text-slate-900 font-mono text-lg">
-              {formatIDR(detailTransaction.total)}
-            </div>
-            <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-              Status
-            </div>
-            <div>
-              <Badge status={detailTransaction.status} />
-            </div>
-            <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-              Channel
-            </div>
-            <div>
-              <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wide">
-                {detailTransaction.channel}
-              </span>
-            </div>
-            <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-              Gym
-            </div>
-            <div className="font-medium text-gray-600">{detailTransaction.gym}</div>
-            <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-              Updated By
-            </div>
-            <div className="font-medium text-gray-600">{detailTransaction.updatedBy}</div>
+            <DetailRow label="Transaction ID" value={detailTransaction.id} mono />
+            <DetailRow label="Invoice" value={detailTransaction.invoice} mono violet />
+            <DetailRow label="Date" value={detailTransaction.date} />
+            <DetailRow label="Member" value={detailTransaction.member} />
+            <DetailRow label="Total" value={formatIDR(detailTransaction.total)} large mono />
+            <DetailRow label="Status" value={<Badge status={detailTransaction.status} />} />
+            <DetailRow
+              label="Channel"
+              value={
+                <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wide">
+                  {detailTransaction.channel}
+                </span>
+              }
+            />
+            <DetailRow label="Gym" value={detailTransaction.gym} />
+            <DetailRow label="Updated By" value={detailTransaction.updatedBy} />
           </div>
         )}
       </Modal>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Sub-components
+// ──────────────────────────────────────────────
+
+function ApiControlBar({ gymId, gymList, dateRange, loading, onGymChange, onDateChange, onRefresh }) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+      <div className="flex flex-col md:flex-row md:items-end gap-4">
+        {/* Gym selector */}
+        <div className="flex-1 min-w-0">
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+            Gym
+          </label>
+          <select
+            value={gymId}
+            onChange={(e) => onGymChange(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
+          >
+            <option value={-1}>All Gyms</option>
+            {gymList.map((g) => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Date range */}
+        <div className="flex-1 min-w-0">
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+            Start Date
+          </label>
+          <input
+            type="date"
+            value={dateRange.startDate}
+            onChange={(e) => onDateChange('startDate', e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+            End Date
+          </label>
+          <input
+            type="date"
+            value={dateRange.endDate}
+            onChange={(e) => onDateChange('endDate', e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
+          />
+        </div>
+
+        {/* Refresh button */}
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-violet-600 bg-violet-50 border border-violet-100 rounded-lg hover:bg-violet-100 transition-all disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 flex flex-col items-center justify-center gap-3">
+      <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+      <p className="text-sm text-gray-500 font-medium">Memuat data transaksi...</p>
+    </div>
+  );
+}
+
+function ErrorState({ message, onRetry }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-16 flex flex-col items-center justify-center gap-3">
+      <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center">
+        <X className="w-6 h-6 text-red-500" />
+      </div>
+      <p className="text-sm text-red-600 font-medium text-center max-w-md">{message}</p>
+      <button
+        onClick={onRetry}
+        className="mt-2 px-4 py-2 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors"
+      >
+        Coba Lagi
+      </button>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 flex flex-col items-center justify-center gap-3">
+      <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
+        <FileX className="w-6 h-6 text-gray-400" />
+      </div>
+      <p className="text-sm text-gray-500 font-medium">Tidak ada data transaksi untuk periode ini.</p>
+    </div>
+  );
+}
+
+function Th({ children, sortable, onClick, className = '' }) {
+  const base = 'px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest';
+  if (sortable) {
+    return (
+      <th className={`${base} ${className}`}>
+        <button
+          type="button"
+          onClick={onClick}
+          className="cursor-pointer hover:text-violet-600 font-bold uppercase tracking-widest text-[11px] text-slate-400"
+        >
+          {children}
+        </button>
+      </th>
+    );
+  }
+  return <th className={`${base} ${className}`}>{children}</th>;
+}
+
+function DetailRow({ label, value, mono, violet, large }) {
+  return (
+    <>
+      <div className="text-gray-400 uppercase text-[10px] font-bold tracking-widest">{label}</div>
+      <div className={`${mono ? 'font-mono' : ''} ${violet ? 'text-violet-600' : 'text-slate-800'} ${large ? 'text-lg' : ''} font-bold`}>
+        {value}
+      </div>
+    </>
+  );
+}
+
+function FilterInput({ label, value, onChange, ...props }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+        {label}
+      </label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
+        {...props}
+      />
+    </div>
+  );
+}
+
+function FilterSelect({ label, value, options, placeholder, onChange }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
     </div>
   );
 }

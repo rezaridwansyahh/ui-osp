@@ -7,7 +7,7 @@ import { saveToken, saveUser } from '../utils/jwt';
  */
 export async function loginAPI(username, password) {
   try {
-    const { data } = await api.post('/v2/login', { username, password });
+    const { data } = await api.post('/api/v2/login', { username, password });
 
     // Simpan JWT token dan user data ke localStorage
     saveToken(data.jwt);

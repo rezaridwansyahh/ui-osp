@@ -9,10 +9,10 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    // Proxy API biar gak kena CORS pas development
+    // Proxy semua request /pos-backend/* ke backend dev (hindari CORS)
     proxy: {
-      '/api': {
-        target: 'https://dev.osp.id/pos-backend',
+      '/pos-backend': {
+        target: 'https://dev.osp.id',
         changeOrigin: true,
         secure: false,
       },

@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { getToken, removeToken } from '../utils/jwt';
 
-// Base URL: di development pakai proxy Vite (/api), di production pakai URL lengkap
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// Base URL: di development pakai proxy Vite, di production pakai URL lengkap
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/pos-backend';
 
 const api = axios.create({
   baseURL: BASE_URL,
