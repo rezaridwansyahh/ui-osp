@@ -15,29 +15,73 @@ export async function fetchOrders({ gymId = -1, startDate, endDate }) {
 }
 
 /**
- * Mapping dari response API ke format yang dipakai tabel DailyTransaction.
- * Field names mungkin perlu disesuaikan setelah lihat response asli.
- * Cek console.log di useOrders untuk lihat raw response.
+ * Mapping dari response API ke format tabel DailyTransaction.
+ * Berdasarkan response real:
+ * { id, trxId, transactionStatus, orderId, trxDate, customer,
+ *   customerName, channelType, gymName, productName, totalAmount,
+ *   paidAmount, discountAmount, createdDate, createdUser, sales, ... }
  */
-export function mapOrderToTransaction(order, index) {
+export function mapOrderToTransaction(order) {
   return {
-    id: order.id ?? order.orderId ?? `ORD-${index}`,
-    date: order.orderDate ?? order.date ?? order.createdAt ?? '-',
-    invoice: order.invoiceNo ?? order.invoice ?? order.orderNo ?? '-',
-    member: order.memberName ?? order.member ?? order.customerName ?? '-',
-    total: order.totalAmount ?? order.total ?? order.amount ?? 0,
-    status: normalizeStatus(order.status ?? order.orderStatus ?? ''),
-    channel: order.paymentChannel ?? order.channel ?? order.paymentMethod ?? '-',
-    gym: order.gymName ?? order.gym ?? '-',
-    updatedBy: order.updatedBy ?? order.createdBy ?? '-',
+    id: order.id ?? order.orderId ?? order.trxId,
+    trxId: order.trxId ?? '-',
+    orderId: order.orderId ?? '-',
+    date: formatTrxDate(order.trxDate ?? order.createdDate),
+    member: order.customerName ?? '-',
+    customerId: order.customer ?? '-',
+    total: order.totalAmount ?? order.paidAmount ?? 0,
+    discount: order.discountAmount ?? 0,
+    paidAmount: order.paidAmount ?? 0,
+    status: normalizeStatus(order.transactionStatus ?? ''),
+    channel: order.channelType ?? '-',
+    gym: order.gymName ?? '-',
+    gymId: order.gymId ?? null,
+    product: order.productName ?? '-',
+    qty: order.qty ?? '-',
+    note: order.note ?? '',
+    keyfob: order.keyfob ?? '',
+    sales: order.sales ?? order.createdUser ?? '-',
+    createdUser: order.createdUser ?? '-',
+    createdDate: order.createdDate ?? '-',
+
+    // Detail pembayaran (bisa multi-channel)
+    payments: extractPayments(order),
+
     raw: order,
   };
+}
+
+// Ambil tanggal aja dari "2025-07-09 04:32:16" → "2025-07-09"
+function formatTrxDate(dateStr) {
+  if (!dateStr) return '-';
+  return dateStr.split(' ')[0];
+}
+
+// Ekstrak detail pembayaran (support sampai 3 channel)
+function extractPayments(order) {
+  const payments = [];
+  for (let i = 1; i <= 3; i++) {
+    const channel = order[`channelType${i}`];
+    const amount = order[`paidAmount${i}`];
+    if (channel || amount) {
+      payments.push({
+        channel: channel ?? '-',
+        cardType: order[`cardType${i}`] ?? '-',
+        amount: amount ?? 0,
+        cardNo: order[`cardNo${i}`] ?? '-',
+        reference: order[`reference${i}`] ?? '-',
+        installment: order[`installment${i}`] ?? '-',
+        bank: order[`bank${i}`] ?? '-',
+      });
+    }
+  }
+  return payments;
 }
 
 // Standarisasi status supaya konsisten dengan Badge component
 function normalizeStatus(status) {
   const upper = String(status).toUpperCase();
-  if (upper.includes('SUCCESS') || upper.includes('PAID') || upper.includes('COMPLETED')) return 'SUCCESS';
+  if (upper.includes('COMPLETED') || upper.includes('SUCCESS') || upper.includes('PAID')) return 'SUCCESS';
   if (upper.includes('VOID') || upper.includes('CANCEL')) return 'VOID';
   if (upper.includes('PENDING') || upper.includes('WAIT')) return 'PENDING';
   return upper || 'UNKNOWN';

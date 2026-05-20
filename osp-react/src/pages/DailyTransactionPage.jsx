@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Download, SlidersHorizontal, FileX, Eye, X, RefreshCw, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import useOrders from '../hooks/useOrders';
@@ -14,7 +14,7 @@ const PAGE_SIZE = 8;
 
 const EMPTY_FILTERS = {
   member: '',
-  invoice: '',
+  trxId: '',
   status: '',
   channel: '',
 };
@@ -65,27 +65,29 @@ export default function DailyTransactionPage() {
     [orders]
   );
 
-  function rowMatchesApplied(t) {
+  const rowMatchesApplied = useCallback((t) => {
     const f = appliedFilters;
     const memberQ = f.member.toLowerCase().trim();
     if (memberQ && !t.member.toLowerCase().includes(memberQ)) return false;
-    const invQ = f.invoice.toLowerCase().trim();
-    if (invQ && !t.invoice.toLowerCase().includes(invQ)) return false;
+    const trxQ = f.trxId.trim();
+    if (trxQ && !String(t.trxId).includes(trxQ) && !String(t.orderId).includes(trxQ)) return false;
     if (f.status && t.status !== f.status) return false;
     if (f.channel && t.channel !== f.channel) return false;
     return true;
-  }
+  }, [appliedFilters]);
 
-  function rowMatchesSearch(t) {
+  const rowMatchesSearch = useCallback((t) => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
     return (
-      t.invoice.toLowerCase().includes(q) ||
+      String(t.trxId).includes(q) ||
+      String(t.orderId).includes(q) ||
       t.member.toLowerCase().includes(q) ||
       t.channel.toLowerCase().includes(q) ||
-      t.status.toLowerCase().includes(q)
+      t.product.toLowerCase().includes(q) ||
+      t.gym.toLowerCase().includes(q)
     );
-  }
+  }, [searchQuery]);
 
   const filteredSorted = useMemo(() => {
     let list = rowsWithOverrides.filter(rowMatchesApplied).filter(rowMatchesSearch);
@@ -93,12 +95,12 @@ export default function DailyTransactionPage() {
     const dir = sortDir === 'asc' ? 1 : -1;
     list = [...list].sort((a, b) => {
       if (sortField === 'date') return String(a.date).localeCompare(String(b.date)) * dir;
-      if (sortField === 'invoice') return String(a.invoice).localeCompare(String(b.invoice)) * dir;
+      if (sortField === 'trxId') return (Number(a.trxId) - Number(b.trxId)) * dir;
       return 0;
     });
 
     return list;
-  }, [rowsWithOverrides, appliedFilters, searchQuery, sortField, sortDir]);
+  }, [rowsWithOverrides, rowMatchesApplied, rowMatchesSearch, sortField, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSorted.length / PAGE_SIZE));
   const displayPage = Math.min(Math.max(1, page), totalPages);
@@ -148,9 +150,9 @@ export default function DailyTransactionPage() {
   }
 
   function handleExportTable() {
-    const headers = ['No.', 'Date', 'Invoice', 'Member', 'Amount', 'Status', 'Channel', 'Gym'];
+    const headers = ['No.', 'Date', 'Trx ID', 'Order ID', 'Member', 'Product', 'Amount', 'Paid', 'Discount', 'Status', 'Channel', 'Gym', 'Sales'];
     const rows = filteredSorted.map((t, i) => [
-      i + 1, t.date, t.invoice, t.member, t.total, t.status, t.channel, t.gym,
+      i + 1, t.date, t.trxId, t.orderId, t.member, t.product, t.total, t.paidAmount, t.discount, t.status, t.channel, t.gym, t.sales,
     ]);
     exportTableToCSV(headers, rows, 'daily_transaction.csv');
     showToast('Export berhasil', 'success');
@@ -162,9 +164,9 @@ export default function DailyTransactionPage() {
       showToast('Tidak ada transaksi VOID pada filter saat ini.', 'error');
       return;
     }
-    const headers = ['No', 'Date', 'Invoice', 'Member', 'Amount', 'Status', 'Channel', 'Gym'];
+    const headers = ['No', 'Date', 'Trx ID', 'Order ID', 'Member', 'Product', 'Amount', 'Status', 'Channel', 'Gym'];
     const rows = voidRows.map((t, i) => [
-      i + 1, t.date, t.invoice, t.member, t.total, t.status, t.channel, t.gym,
+      i + 1, t.date, t.trxId, t.orderId, t.member, t.product, t.total, t.status, t.channel, t.gym,
     ]);
     exportTableToCSV(headers, rows, 'void_transactions_report.csv');
     showToast('Laporan VOID diunduh.', 'success');
@@ -221,7 +223,7 @@ export default function DailyTransactionPage() {
             <SearchInput
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search invoice, member, channel..."
+              placeholder="Search trx ID, member, product, gym..."
               className="[&_input]:py-2.5 [&_input]:rounded-xl [&_input]:pl-10"
             />
           </div>
@@ -238,11 +240,11 @@ export default function DailyTransactionPage() {
               onChange={(v) => setFilterDraft((d) => ({ ...d, member: v }))}
             />
             <FilterInput
-              label="Invoice No"
+              label="Trx / Order ID"
               type="text"
-              placeholder="INV-..."
-              value={filterDraft.invoice}
-              onChange={(v) => setFilterDraft((d) => ({ ...d, invoice: v }))}
+              placeholder="e.g. 620235"
+              value={filterDraft.trxId}
+              onChange={(v) => setFilterDraft((d) => ({ ...d, trxId: v }))}
             />
             <FilterSelect
               label="Status"
@@ -293,11 +295,13 @@ export default function DailyTransactionPage() {
                 <tr className="bg-slate-50 border-b border-gray-100">
                   <Th>No.</Th>
                   <Th sortable onClick={() => toggleSort('date')}>Date{sortHint('date')}</Th>
-                  <Th sortable onClick={() => toggleSort('invoice')}>Invoice{sortHint('invoice')}</Th>
+                  <Th sortable onClick={() => toggleSort('trxId')}>Trx ID{sortHint('trxId')}</Th>
                   <Th>Member</Th>
+                  <Th>Product</Th>
                   <Th className="text-right">Amount</Th>
                   <Th>Status</Th>
                   <Th className="text-center">Channel</Th>
+                  <Th>Gym</Th>
                   <Th className="text-center">Action</Th>
                 </tr>
               </thead>
@@ -307,10 +311,11 @@ export default function DailyTransactionPage() {
                   return (
                     <tr key={t.id} className="hover:bg-violet-50/30 transition-colors">
                       <td className="px-6 py-4 text-gray-400 font-medium">{rowNo}</td>
-                      <td className="px-6 py-4 font-semibold text-gray-600">{t.date}</td>
-                      <td className="px-6 py-4 font-mono font-bold text-violet-600">{t.invoice}</td>
+                      <td className="px-6 py-4 font-semibold text-gray-600 whitespace-nowrap">{t.date}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-violet-600">{t.trxId}</td>
                       <td className="px-6 py-4 font-bold text-slate-800">{t.member}</td>
-                      <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">
+                      <td className="px-6 py-4 text-gray-600 text-xs">{t.product}</td>
+                      <td className="px-6 py-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
                         {formatIDR(t.total)}
                       </td>
                       <td className="px-6 py-4"><Badge status={t.status} /></td>
@@ -319,6 +324,7 @@ export default function DailyTransactionPage() {
                           {t.channel}
                         </span>
                       </td>
+                      <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">{t.gym}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button
@@ -370,8 +376,9 @@ export default function DailyTransactionPage() {
         <p className="text-sm text-gray-600 mb-4">Are you sure you want to void this transaction?</p>
         {voidTarget && (
           <div className="p-3 bg-gray-50 rounded-xl text-xs font-medium text-gray-700 space-y-1">
-            <div className="font-bold">{voidTarget.invoice}</div>
+            <div className="font-bold">Trx #{voidTarget.trxId}</div>
             <div>Member: {voidTarget.member}</div>
+            <div>Product: {voidTarget.product}</div>
             <div>Total: {formatIDR(voidTarget.total)}</div>
           </div>
         )}
@@ -382,29 +389,63 @@ export default function DailyTransactionPage() {
         isOpen={!!detailTransaction}
         onClose={() => setDetailTransaction(null)}
         title="Transaction Detail"
-        maxWidth="max-w-md"
+        maxWidth="max-w-lg"
         footer={
           <Button variant="outline" onClick={() => setDetailTransaction(null)}>Close</Button>
         }
       >
         {detailTransaction && (
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <DetailRow label="Transaction ID" value={detailTransaction.id} mono />
-            <DetailRow label="Invoice" value={detailTransaction.invoice} mono violet />
-            <DetailRow label="Date" value={detailTransaction.date} />
-            <DetailRow label="Member" value={detailTransaction.member} />
-            <DetailRow label="Total" value={formatIDR(detailTransaction.total)} large mono />
-            <DetailRow label="Status" value={<Badge status={detailTransaction.status} />} />
-            <DetailRow
-              label="Channel"
-              value={
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <DetailRow label="Trx ID" value={detailTransaction.trxId} mono violet />
+              <DetailRow label="Order ID" value={detailTransaction.orderId} mono />
+              <DetailRow label="Date" value={detailTransaction.date} />
+              <DetailRow label="Member" value={detailTransaction.member} />
+              <DetailRow label="Customer ID" value={detailTransaction.customerId} mono />
+              <DetailRow label="Product" value={detailTransaction.product} />
+              <DetailRow label="Qty" value={detailTransaction.qty} mono />
+              <DetailRow label="Total" value={formatIDR(detailTransaction.total)} large mono />
+              <DetailRow label="Discount" value={formatIDR(detailTransaction.discount)} mono />
+              <DetailRow label="Paid" value={formatIDR(detailTransaction.paidAmount)} mono />
+              <DetailRow label="Status" value={<Badge status={detailTransaction.status} />} />
+              <DetailRow label="Channel" value={
                 <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wide">
                   {detailTransaction.channel}
                 </span>
-              }
-            />
-            <DetailRow label="Gym" value={detailTransaction.gym} />
-            <DetailRow label="Updated By" value={detailTransaction.updatedBy} />
+              } />
+              <DetailRow label="Gym" value={detailTransaction.gym} />
+              <DetailRow label="Sales" value={detailTransaction.sales} />
+              <DetailRow label="Created" value={detailTransaction.createdDate} />
+            </div>
+
+            {/* Detail pembayaran multi-channel */}
+            {detailTransaction.payments?.length > 0 && (
+              <div className="pt-3 border-t border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</p>
+                <div className="space-y-2">
+                  {detailTransaction.payments.map((p, idx) => (
+                    <div key={idx} className="p-2.5 bg-gray-50 rounded-lg text-xs grid grid-cols-2 gap-2">
+                      <span className="text-gray-400">Channel</span>
+                      <span className="font-semibold">{p.channel}</span>
+                      <span className="text-gray-400">Amount</span>
+                      <span className="font-mono font-bold">{formatIDR(p.amount)}</span>
+                      {p.reference !== '-' && (
+                        <>
+                          <span className="text-gray-400">Reference</span>
+                          <span className="font-mono">{p.reference}</span>
+                        </>
+                      )}
+                      {p.cardType !== '-' && p.cardType && (
+                        <>
+                          <span className="text-gray-400">Card Type</span>
+                          <span>{p.cardType}</span>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>
