@@ -7,7 +7,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/pos-backend';
 const api = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15000,
+  timeout: 60000,
 });
 
 // Request interceptor — otomatis inject JWT token ke setiap request

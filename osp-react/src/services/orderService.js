@@ -8,7 +8,7 @@ import api from './api';
  * @param {string} params.endDate — Format YYYY-MM-DD
  */
 export async function fetchOrders({ gymId = -1, startDate, endDate }) {
-  const { data } = await api.get('/placeorder/details-orderv2', {
+  const { data } = await api.get('/placeorder/details-order', {
     params: { gymId, startDate, endDate },
   });
   return data;
@@ -46,6 +46,14 @@ export function mapOrderToTransaction(order) {
 
     // Detail pembayaran (bisa multi-channel)
     payments: extractPayments(order),
+
+    postingDate: order.postingDate ?? order.createdDate ?? '-',
+    paymentType: order.channelType ?? order.paymentType ?? '-',
+    cardType: order.cardType ?? order.cardType1 ?? '-',
+    debitAmount: order.paidAmount ?? order.totalAmount ?? 0,
+    internalMdr: order.internalMdr ?? order.mdrInternal ?? '%',
+    externalMdr: order.externalMdr ?? order.mdrExternal ?? '%',
+    mdrRp: order.mdrRp ?? order.mdrAmount ?? 0,
 
     raw: order,
   };

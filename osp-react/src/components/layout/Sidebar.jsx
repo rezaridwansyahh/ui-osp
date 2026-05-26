@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Store, Package, BarChart3, ChevronDown, User } from 'lucide-react';
+import { Home, Store, Package, BarChart3, ChevronDown, User, FileText } from 'lucide-react';
 import { SIDEBAR_NAV } from '../../utils/constants';
 import { useAuth } from '../../contexts/AuthContext';
 
-const ICON_MAP = { Home, Store, Package, BarChart3 };
+const ICON_MAP = { Home, Store, Package, BarChart3, FileText };
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
