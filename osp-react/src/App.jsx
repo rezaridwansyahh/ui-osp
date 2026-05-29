@@ -7,7 +7,7 @@ import HomePage from './pages/HomePage';
 import MembersPage from './pages/MembersPage';
 import ProductPage from './pages/ProductPage';
 import CardVerifyPage from './pages/CardVerifyPage';
-import OrderDetailPage from './pages/OrderDetailPage';
+import DailySalesReportPage from './pages/DailySalesReportPage';
 import MonthlyPaymentPage from './pages/MonthlyPaymentPage';
 import OspReportPage from './pages/OspReportPage';
 import PendingMembershipPage from './pages/PendingMembershipPage';
@@ -28,7 +28,7 @@ export default function App() {
         <Route path="/members" element={<MembersPage />} />
         <Route path="/product" element={<ProductPage />} />
         <Route path="/card-verify" element={<CardVerifyPage />} />
-        <Route path="/daily-transaction" element={<OrderDetailPage />} />
+        <Route path="/daily-transaction" element={<DailySalesReportPage />} />
         <Route path="/monthly-payment" element={<MonthlyPaymentPage />} />
         <Route path="/osp-report" element={<OspReportPage />} />
         <Route path="/pending-membership" element={<PendingMembershipPage />} />

@@ -41,7 +41,7 @@ export const SIDEBAR_NAV = [
     label: 'Point of Sales',
     icon: 'BarChart3',
     children: [
-      { label: 'Order Detail', path: '/daily-transaction' },
+      { label: 'Daily Sales Report', path: '/daily-transaction' },
       { label: 'OSP Report', path: '/osp-report' },
       { label: 'Pending Membership', path: '/pending-membership' },
     ],
@@ -54,7 +54,7 @@ export const BREADCRUMBS = {
   '/card-verify': [{ label: 'Home', path: '/' }, { label: 'Card Verify Submission' }],
   '/monthly-payment': [{ label: 'Home', path: '/' }, { label: 'Monthly Payment' }],
   '/product': [{ label: 'Home', path: '/' }, { label: 'Package & Product' }, { label: 'Product' }],
-  '/daily-transaction': [{ label: 'Home', path: '/' }, { label: 'Point of Sales' }, { label: 'Order Detail' }],
+  '/daily-transaction': [{ label: 'Home', path: '/' }, { label: 'Point of Sales' }, { label: 'Daily Sales Report' }],
   '/osp-report': [{ label: 'Home', path: '/' }, { label: 'Point of Sales' }, { label: 'OSP Report' }],
   '/pending-membership': [{ label: 'Home', path: '/' }, { label: 'Point of Sales' }, { label: 'Pending Membership' }],
 };

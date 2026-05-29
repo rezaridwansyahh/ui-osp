@@ -45,7 +45,7 @@ function IdleState({ onRefresh }) {
 }
 
 // ─── Main page ────────────────────────────────────────────────────
-export default function OrderDetailPage() {
+export default function DailySalesReportPage() {
   const { user } = useAuth();
   const showToast = useShowToast();
   const defaultGymId = user?.gymId ?? -1;
@@ -85,7 +85,7 @@ export default function OrderDetailPage() {
       fmtDate(o.date), fmtDate(o.postingDate), o.gym, o.member, o.product,
       o.paymentType, o.cardType, o.debitAmount, o.internalMdr, o.externalMdr, o.mdrRp,
     ]);
-    exportTableToCSV(headers, rows, 'order-detail.csv');
+    exportTableToCSV(headers, rows, 'daily-sales-report.csv');
     showToast?.('CSV berhasil diunduh', 'success');
   }
 

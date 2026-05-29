@@ -15,7 +15,7 @@ export async function fetchOrders({ gymId = -1, startDate, endDate }) {
 }
 
 /**
- * Mapping dari response API ke format tabel DailyTransaction.
+ * Mapping dari response API ke format tabel Daily Sales Report.
  * Berdasarkan response real:
  * { id, trxId, transactionStatus, orderId, trxDate, customer,
  *   customerName, channelType, gymName, productName, totalAmount,
