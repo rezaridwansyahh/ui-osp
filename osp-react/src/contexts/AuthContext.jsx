@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getToken, isTokenValid, clearAuth, getUser } from '../utils/jwt';
 import { loginAPI } from '../services/authService';
+import { applyTheme, resetTheme } from '../services/themeService';
 
 const AuthContext = createContext(null);
 
@@ -11,7 +12,10 @@ function getUserFromStorage() {
     clearAuth();
     return null;
   }
-  return getUser();
+  const user = getUser();
+  // Apply theme langsung saat app load (kalau sudah login)
+  if (user?.brandId) applyTheme(user.brandId);
+  return user;
 }
 
 export function AuthProvider({ children }) {
@@ -29,6 +33,8 @@ export function AuthProvider({ children }) {
     const result = await loginAPI(username, password);
     if (result.success) {
       setUser(result.user);
+      // Apply theme sesuai brandId dari user yang login
+      if (result.user?.brandId) applyTheme(result.user.brandId);
     }
     return result;
   }, []);
@@ -36,6 +42,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     clearAuth();
     setUser(null);
+    resetTheme();
   }, []);
 
   return (

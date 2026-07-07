@@ -23,6 +23,26 @@
   --color-danger: #EF4444;
 }
 
+/* ── Brand Theme Variables (default = OSP dark) ── */
+:root {
+  --sidebar-bg:                  #1e293b;
+  --sidebar-border:              #334155;
+  --user-card-bg:                rgba(255,255,255,0.06);
+  --nav-active-bg:               rgba(255,255,255,0.10);
+  --nav-active-color:            #ffffff;
+  --nav-inactive-color:          #94a3b8;
+  --nav-hover-bg:                rgba(255,255,255,0.05);
+  --nav-hover-color:             #ffffff;
+  --nav-parent-active-color:     #ffffff;
+  --nav-parent-active-bg:        rgba(255,255,255,0.05);
+  --nav-child-active-bg:         rgba(255,255,255,0.05);
+  --nav-child-active-color:      #ffffff;
+  --nav-child-inactive-color:    #94a3b8;
+  --sidebar-border-accent:       #475569;
+  --logo-bg:                     linear-gradient(135deg, #7c3aed, #5b21b6);
+  --font-family: 'Inter', sans-serif;
+}
+
 @layer base {
   html, body, #root {
     height: 100%;
@@ -35,7 +55,14 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-family), sans-serif;
   }
+}
+
+/* ── Sidebar nav hover (pakai CSS variable) ── */
+.sidebar-nav-item:hover {
+  background-color: var(--nav-hover-bg) !important;
+  color: var(--nav-hover-color) !important;
 }
 
 /* ── Sidebar ── */

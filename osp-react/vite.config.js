@@ -12,7 +12,7 @@ export default defineConfig({
     // Proxy semua request /pos-backend/* ke backend dev (hindari CORS)
     proxy: {
       '/pos-backend': {
-        target: 'https://osp.id',
+        target: 'https://dev.osp.id',
         changeOrigin: true,
         secure: false,
       },
