@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Store, Package, BarChart3, ChevronDown, User, FileText } from 'lucide-react';
+import { Home, Store, Package, BarChart3, ChevronDown, User, FileText, Palette } from 'lucide-react';
 import { SIDEBAR_NAV } from '../../utils/constants';
 import { useAuth } from '../../contexts/AuthContext';
 import { getTheme } from '../../services/themeService';
@@ -48,14 +48,14 @@ export default function Sidebar({ isOpen, onClose }) {
       >
         {/* Logo */}
         <div className="h-16 flex items-center gap-3 px-5 flex-shrink-0"
-          style={{ borderBottom: '1px solid var(--sidebar-border)' }}
+          style={theme.invertLogo === false ? undefined : { filter: 'brightness(0) invert(1)' }}
         >
         <img
-          src={theme.logoUrl}
-          alt={theme.brandName}
-          className="h-25 w-auto object-contain max-w-[160px]"
-          style={{ filter: 'brightness(0) invert(1)' }}
-        />
+        src={theme.logoUrl}
+        alt={theme.brandName}
+        className="h-25 w-auto object-contain max-w-[160px]"
+        style={theme.invertLogo === false ? undefined : { filter: 'brightness(0) invert(1)' }}
+      />
 </div>
 
         {/* User info */}
@@ -151,6 +151,22 @@ export default function Sidebar({ isOpen, onClose }) {
               </div>
             );
           })}
+
+          {/* Menu khusus OSP admin (brandId 3) — kontrol tema per brand */}
+          {user?.brandId === 3 && (
+            <Link
+              to="/admin/theme"
+              onClick={onClose}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors sidebar-nav-item"
+              style={{
+                backgroundColor: location.pathname === '/admin/theme' ? 'var(--nav-active-bg)' : 'transparent',
+                color: location.pathname === '/admin/theme' ? 'var(--nav-active-color)' : 'var(--nav-inactive-color)',
+              }}
+            >
+              <Palette className="w-[18px] h-[18px] flex-shrink-0" />
+              Theme Settings
+            </Link>
+          )}
         </nav>
       </aside>
     </>

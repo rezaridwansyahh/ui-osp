@@ -1,12 +1,24 @@
 import brandThemes from '../data/brandThemes.json';
+import { getOverrideForBrand } from './themeOverrideService';
+
+/**
+ * Ambil data tema lengkap untuk sebuah brandId.
+ * Cek override dari admin panel (localStorage) dulu, baru fallback ke brandThemes.json.
+ */
+export function getTheme(brandId) {
+  const key = String(brandId ?? 'default');
+  const baseTheme = brandThemes[key] ?? brandThemes['default'];
+  const override = getOverrideForBrand(key);
+  return override ? { ...baseTheme, ...override } : baseTheme;
+}
 
 /**
  * Apply theme berdasarkan brandId ke CSS Variables di :root
- * Dipanggil saat login berhasil atau saat app load (kalau user sudah login)
+ * Dipanggil saat login berhasil, saat app load (kalau user sudah login),
+ * atau saat admin save perubahan di Theme Admin Panel.
  */
 export function applyTheme(brandId) {
-  const key = String(brandId);
-  const theme = brandThemes[key] ?? brandThemes['default'];
+  const theme = getTheme(brandId);
   const root = document.documentElement;
 
   root.style.setProperty('--sidebar-bg',            theme.sidebarBg);
@@ -24,17 +36,12 @@ export function applyTheme(brandId) {
   root.style.setProperty('--nav-child-inactive-color', theme.childInactiveColor);
   root.style.setProperty('--sidebar-border-accent', theme.borderAccent);
   root.style.setProperty('--logo-bg',               theme.logoBg);
-  root.style.setProperty('--logo-text',             `"${theme.logoText}"`);
-  root.style.setProperty('--font-family', theme.fontFamily);
-}
-
-export function getTheme(brandId) {
-  const key = String(brandId ?? 'default');
-  return brandThemes[key] ?? brandThemes['default'];
+  root.style.setProperty('--logo-text',             `"${theme.logoText ?? ''}"`);
+  root.style.setProperty('--font-family',           theme.fontFamily);
 }
 
 /**
- * Reset ke default theme (saat logout)
+ * Reset ke default theme (saat logout, atau saat brandId null/admin OSP tanpa gym)
  */
 export function resetTheme() {
   applyTheme('default');

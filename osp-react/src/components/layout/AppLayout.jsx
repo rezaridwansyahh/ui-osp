@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import Toast from '../ui/Toast';
+import DevMockPanel from '../ui/DevMockPanel';
 import { useToast } from '../../hooks/useToast';
 import { ToastContext } from '../../contexts/ToastContext';
 
@@ -32,6 +33,7 @@ export default function AppLayout() {
         </div>
 
         {toast && <Toast message={toast.message} type={toast.type} />}
+        <DevMockPanel />
       </div>
     </ToastContext.Provider>
   );
