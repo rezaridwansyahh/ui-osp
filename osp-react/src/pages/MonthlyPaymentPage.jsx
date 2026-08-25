@@ -27,7 +27,7 @@ import {
 } from '../data/monthlyPayment';
 import { fetchPaymentTypes, fetchMasterGyms } from '../services/masterService';
 import { searchCustomers, mapApiCustomer } from '../services/memberService';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useShowToast } from '../contexts/ToastContext';
 import Avatar from '../components/ui/Avatar';
 import Badge from '../components/ui/Badge';
@@ -63,12 +63,9 @@ export default function MonthlyPaymentPage() {
   // Fallback ke dummy PAYMENT_GYMS selama loading/kalau fetch gagal
   const gymOptions = gymList && gymList.length > 0 ? gymList : PAYMENT_GYMS;
 
-  useEffect(() => {
-    // Set default begitu fallback dummy dipakai (fetch gagal & belum ada pilihan)
-    if (!selectedGym && gymList !== null && gymList.length === 0) {
-      setSelectedGym(PAYMENT_GYMS[0]);
-    }
-  }, [selectedGym, gymList]);
+  // Default ke opsi pertama kalau belum ada yang dipilih — dihitung saat
+  // render (derived), bukan disinkronkan lewat effect terpisah.
+  const effectiveSelectedGym = selectedGym || gymOptions[0] || '';
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [monthStatuses, setMonthStatuses] = useState({});
@@ -170,6 +167,8 @@ export default function MonthlyPaymentPage() {
   useEffect(() => {
     const q = memberSearchQuery.trim();
     if (!memberSearchOpen || q.length < 2) {
+      // Bagian dari effect search-debounce di bawah, bukan sync state terpisah.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchResults(null);
       return;
     }
@@ -296,7 +295,7 @@ export default function MonthlyPaymentPage() {
                 <MapPin className="w-4 h-4 text-violet-600" />
               </div>
               <select
-                value={selectedGym}
+                value={effectiveSelectedGym}
                 onChange={(e) => setSelectedGym(e.target.value)}
                 className="px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none cursor-pointer"
               >
@@ -443,7 +442,7 @@ export default function MonthlyPaymentPage() {
                           stats.collectMonths > 0 ? selectedMember.monthlyAmount : 0
                         ),
                         icon: Calendar,
-                        color: 'text-blue-500',
+                        color: 'text-violet-500',
                       },
                       {
                         label: `${stats.waivedMonths} waived month(s)`,
@@ -509,7 +508,7 @@ export default function MonthlyPaymentPage() {
                         Sales Name
                       </label>
                       <select className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-white focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none">
-                        <option>{`OSP Kemang - ${selectedGym}`}</option>
+                        <option>{`OSP Kemang - ${effectiveSelectedGym}`}</option>
                       </select>
                     </div>
                     <div className="sm:col-span-2">
@@ -578,7 +577,7 @@ export default function MonthlyPaymentPage() {
                     <h3 className="text-sm font-bold text-gray-900 truncate">
                       {selectedMember.name}
                     </h3>
-                    <p className="text-xs text-gray-400">{selectedGym}</p>
+                    <p className="text-xs text-gray-400">{effectiveSelectedGym}</p>
                   </div>
                   <Badge status={selectedMember.status} />
                 </div>

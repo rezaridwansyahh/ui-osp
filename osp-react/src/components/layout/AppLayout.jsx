@@ -9,6 +9,7 @@ import { ToastContext } from '../../contexts/ToastContext';
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { toast, showToast } = useToast();
 
   const toggleSidebar = useCallback(() => {
@@ -19,13 +20,21 @@ export default function AppLayout() {
     setSidebarOpen(false);
   }, []);
 
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((prev) => !prev);
+  }, []);
+
   return (
     <ToastContext.Provider value={showToast}>
       <div className="flex h-screen font-sans bg-gray-50 overflow-hidden">
-        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} collapsed={sidebarCollapsed} />
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <Navbar onToggleSidebar={toggleSidebar} />
+          <Navbar
+            onToggleSidebar={toggleSidebar}
+            sidebarCollapsed={sidebarCollapsed}
+            onToggleSidebarCollapsed={toggleSidebarCollapsed}
+          />
 
           <main className="flex-1 overflow-y-auto bg-gray-50">
             <Outlet />

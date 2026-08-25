@@ -1,11 +1,13 @@
 import api from './api';
+import { formatCurrency } from '../utils/helpers';
 
 // CATATAN: field respons /customers dikonfirmasi dari network tab (Aug 14):
 // { id, name, keyFob, email, phoneNumber, additionalInformation (JSON string
 // berisi array [{amount, description, type}]), createdDate, gymName, status,
 // membershipType, responseCode, responseMessage }. status sering null di data
-// real — fallback ke 'ACTIVE' dipertahankan biar Badge gak error, tapi ini
-// asumsi sampai dikonfirmasi mentor/backend field status yang bener.
+// real — dibiarin null apa adanya (lihat mapApiCustomer di bawah), TIDAK
+// difallback ke 'ACTIVE' atau string lain. Badge/STATUS_DOT_COLORS sudah
+// punya fallback abu-abu buat status yang falsy.
 
 /** Total angka mentah dari additionalInformation (buat kalkulasi & display, parse sekali). */
 function sumAdditionalInfo(raw) {
@@ -24,6 +26,26 @@ export async function fetchAllCustomers() {
   // Response bisa lambat (>60s) di beberapa gym besar — timeout dinaikin
   // khusus buat call ini, override default 60s di api.js.
   const { data } = await api.get('/customers', { timeout: 180000 });
+  return data;
+}
+
+let customersCache = null; // { data, fetchedAt }
+const CUSTOMERS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 menit
+
+/**
+ * Sama seperti fetchAllCustomers(), tapi nyimpen hasilnya di memory session
+ * ini selama CUSTOMERS_CACHE_TTL_MS — biar HomePage & MembersPage gak dobel
+ * nembak /customers (bisa >140s) pas user gonta-ganti halaman dalam rentang
+ * waktu pendek. Pass { force: true } buat selalu fetch ulang (misalnya
+ * tombol Refresh manual di MembersPage).
+ */
+export async function fetchAllCustomersCached({ force = false } = {}) {
+  const now = Date.now();
+  if (!force && customersCache && now - customersCache.fetchedAt < CUSTOMERS_CACHE_TTL_MS) {
+    return customersCache.data;
+  }
+  const data = await fetchAllCustomers();
+  customersCache = { data, fetchedAt: now };
   return data;
 }
 
@@ -52,11 +74,12 @@ export function mapApiCustomer(c) {
     email: c.email || '-',
     keyfob: c.keyFob || '-',
     register: c.createdDate ? c.createdDate.slice(0, 10) : '-',
-    bill: billAmount > 0 ? `IDR ${billAmount.toLocaleString('id-ID')}` : '-',
+    bill: billAmount > 0 ? formatCurrency(billAmount) : '-',
     billAmount,
     // status sering null di data real (GET /customers) — dibiarin null apa
     // adanya, gak dipaksa jadi string apapun. Badge/STATUS_DOT_COLORS udah
     // punya fallback abu-abu buat status yang falsy.
     status: c.status ? c.status.toUpperCase() : null,
+    membershipType: c.membershipType || null,
   };
 }

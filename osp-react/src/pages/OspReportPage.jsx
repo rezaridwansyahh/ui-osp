@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { FileX, Loader2, Printer, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import * as XLSX from 'xlsx';
 import { useShowToast } from '../contexts/ToastContext';
 import { fetchOrders } from '../services/orderService';
+import { formatCurrency } from '../utils/helpers';
 
 const PAGE_SIZE = 20;
 
@@ -11,10 +12,9 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-const formatIDR = (n) => {
-  if (n == null) return '-';
-  return 'Rp ' + Number(n).toLocaleString('id-ID');
-};
+// '-' buat nilai yang emang gak ada (bukan 0) — beda dari formatCurrency()
+// yang selalu nampilin angka, biar gak salah dibaca sebagai "beneran Rp 0".
+const formatIDR = (n) => (n == null ? '-' : formatCurrency(n));
 
 const formatDate = (d) => {
   if (!d) return '-';
@@ -207,7 +207,7 @@ export default function OspReportPage() {
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-60"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             Search
@@ -231,7 +231,7 @@ export default function OspReportPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleExportCSV}
-                className="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 rounded hover:bg-blue-700"
+                className="px-3 py-1.5 text-xs font-bold text-white bg-violet-600 rounded hover:bg-violet-700"
               >
                 CSV
               </button>

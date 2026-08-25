@@ -3,10 +3,11 @@ import {
   Search, Printer, FileText, FileSpreadsheet,
   RefreshCw, FileX, Loader2, ChevronLeft, ChevronRight,
 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useShowToast } from '../contexts/ToastContext';
 import * as XLSX from 'xlsx';
 import { fetchOrders } from '../services/orderService';
+import { formatCurrency } from '../utils/helpers';
 
 const PAGE_SIZE = 20;
 
@@ -22,7 +23,7 @@ function fmtDate(str) {
 function fmtAmount(val) {
   const n = Number(val);
   if (isNaN(n) || val == null) return '-';
-  return n.toLocaleString('id-ID');
+  return formatCurrency(n);
 }
 
 // ─── Sub components ───────────────────────────────────────────────
@@ -70,7 +71,7 @@ const COLS = [
   { label: 'Debit Amount', key: 'paidAmount',     render: (o) => fmtAmount(o.paidAmount),   cls: 'text-right font-mono' },
   { label: 'Internal MDR', key: 'internalMdr',    render: (o) => o.internalMdr ?? '-' },
   { label: 'External MDR', key: 'externalMdr',    render: (o) => o.externalMdr ?? '-' },
-  { label: 'MDR (in Rp)',  key: 'mdrRp',          render: (o) => fmtAmount(o.mdrRp),        cls: 'text-right font-mono' },
+  { label: 'MDR',          key: 'mdrRp',          render: (o) => fmtAmount(o.mdrRp),        cls: 'text-right font-mono' },
 ];
 
 // ─── Main page ────────────────────────────────────────────────────
@@ -243,7 +244,7 @@ export default function DailySalesReportPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleCSV}
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition"
+            className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition"
           >
             <FileText className="w-3.5 h-3.5" /> CSV
           </button>

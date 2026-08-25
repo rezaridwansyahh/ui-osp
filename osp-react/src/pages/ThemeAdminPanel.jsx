@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import brandThemes from '../data/brandThemes.json';
 import {
   getOverrideForBrand,
@@ -82,9 +82,16 @@ const imageElementToResizedBase64 = (img) => {
   return canvas.toDataURL('image/png');
 };
 
+function buildFormData(brandId) {
+  const key = String(brandId);
+  const base = brandThemes[key] ?? brandThemes['default'];
+  const override = getOverrideForBrand(key);
+  return { ...base, ...override };
+}
+
 export default function ThemeAdminPanel() {
   const [selectedBrand, setSelectedBrand] = useState(1);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState(() => buildFormData(1));
   const [logoMode, setLogoMode] = useState('url'); // 'url' | 'upload'
   const [saved, setSaved] = useState(false);
 
@@ -100,16 +107,17 @@ export default function ThemeAdminPanel() {
 
   const brandOptions = [...BASE_BRAND_OPTIONS, ...customBrands];
 
-  // load data (override kalau ada, fallback ke base theme) tiap ganti brand
-  useEffect(() => {
-    const key = String(selectedBrand);
-    const base = brandThemes[key] ?? brandThemes['default'];
-    const override = getOverrideForBrand(key);
-    setFormData({ ...base, ...override });
+  // load data (override kalau ada, fallback ke base theme) tiap ganti brand —
+  // diadaptasi saat render (bukan effect), sesuai pola resmi React utk
+  // "resetting state when a prop changes": https://react.dev/learn/you-might-not-need-an-effect
+  const [prevSelectedBrand, setPrevSelectedBrand] = useState(selectedBrand);
+  if (selectedBrand !== prevSelectedBrand) {
+    setPrevSelectedBrand(selectedBrand);
+    setFormData(buildFormData(selectedBrand));
     setSaved(false);
     setUrlError('');
     setLogoUrlInput('');
-  }, [selectedBrand]);
+  }
 
   const handleFieldChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -260,7 +268,7 @@ export default function ThemeAdminPanel() {
               onClick={() => setSelectedBrand(brand.id)}
               className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
                 selectedBrand === brand.id
-                  ? 'border-2 border-blue-600 bg-blue-50 font-semibold text-blue-700'
+                  ? 'border-2 border-violet-600 bg-violet-50 font-semibold text-violet-700'
                   : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -291,7 +299,7 @@ export default function ThemeAdminPanel() {
             />
             <button
               onClick={handleAddBrand}
-              className="px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white font-medium"
+              className="px-3 py-1.5 text-sm rounded-md bg-violet-600 text-white font-medium"
             >
               Tambah
             </button>
@@ -305,7 +313,7 @@ export default function ThemeAdminPanel() {
         ) : (
           <button
             onClick={() => setShowAddBrand(true)}
-            className="px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600"
+            className="px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 hover:border-violet-400 hover:text-violet-600"
           >
             + Brand Baru
           </button>
@@ -321,7 +329,7 @@ export default function ThemeAdminPanel() {
             onClick={() => setLogoMode('url')}
             className={`px-3 py-1 text-xs rounded-md border transition-colors ${
               logoMode === 'url'
-                ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
+                ? 'border-violet-600 bg-violet-50 text-violet-700 font-medium'
                 : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -331,7 +339,7 @@ export default function ThemeAdminPanel() {
             onClick={() => setLogoMode('upload')}
             className={`px-3 py-1 text-xs rounded-md border transition-colors ${
               logoMode === 'upload'
-                ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
+                ? 'border-violet-600 bg-violet-50 text-violet-700 font-medium'
                 : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -347,12 +355,12 @@ export default function ThemeAdminPanel() {
                 placeholder="https://example.com/logo.png"
                 value={logoUrlInput}
                 onChange={(e) => setLogoUrlInput(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
               <button
                 onClick={handleLoadFromUrl}
                 disabled={urlLoading || !logoUrlInput.trim()}
-                className="px-3 py-2 rounded-md bg-blue-600 text-white text-sm font-medium disabled:opacity-50"
+                className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm font-medium disabled:opacity-50"
               >
                 {urlLoading ? 'Loading...' : 'Load'}
               </button>
@@ -365,7 +373,7 @@ export default function ThemeAdminPanel() {
               type="file"
               accept="image/*"
               onChange={handleLogoFileUpload}
-              className="text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 file:text-sm file:font-medium hover:file:bg-blue-100"
+              className="text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-violet-50 file:text-violet-700 file:text-sm file:font-medium hover:file:bg-violet-100"
             />
             <p className="text-xs text-gray-400 mt-1">
               Gambar otomatis di-resize maks. {MAX_LOGO_DIMENSION}px sebelum disimpan.
@@ -446,7 +454,7 @@ export default function ThemeAdminPanel() {
       <div className="flex items-center gap-2">
         <button
           onClick={handleSave}
-          className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-colors"
+          className="px-5 py-2.5 rounded-lg bg-violet-600 text-white font-semibold text-sm hover:bg-violet-700 transition-colors"
         >
           Save & Apply
         </button>

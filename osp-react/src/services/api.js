@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — handle 401 (token expired / unauthorized)
+// Response interceptor — handle 401 (token expired / unauthorized) dan 403 (RBAC)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -27,6 +27,13 @@ api.interceptors.response.use(
       removeToken();
       localStorage.removeItem('osp_user');
       window.location.href = '/login';
+    } else if (error.response?.status === 403) {
+      // Token masih valid, cuma role-nya ga punya izin — jangan logout, cuma
+      // pastiin pesannya jelas buat siapapun yang nangkep error ini (err.message
+      // atau err.response?.data?.message di halaman)
+      if (!error.response.data?.message) {
+        error.message = 'Anda tidak punya izin untuk melakukan aksi ini.';
+      }
     }
     return Promise.reject(error);
   }

@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { AlertTriangle, Info, Building2, FileX, Printer, X, Loader2 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import * as XLSX from 'xlsx';
 import { useShowToast } from '../contexts/ToastContext';
 import { fetchPendingMembershipByGym } from '../services/memberService';
+import { formatCurrency } from '../utils/helpers';
 
 const PAGE_SIZE = 10;
 
@@ -12,10 +13,9 @@ const formatDate = (d) => {
   return String(d).replace('T', ' ').slice(0, 19);
 };
 
-const formatIDR = (n) => {
-  if (n == null) return 'Rp. 0';
-  return 'Rp. ' + Number(n).toLocaleString('id-ID');
-};
+// '-' buat nilai yang emang gak ada (bukan 0) — beda dari formatCurrency()
+// yang selalu nampilin angka, biar gak salah dibaca sebagai "beneran Rp 0".
+const formatIDR = (n) => (n == null ? '-' : formatCurrency(n));
 
 export default function PendingMembershipPage() {
   const showToast = useShowToast();
@@ -32,7 +32,6 @@ export default function PendingMembershipPage() {
   const [pendingList, setPendingList] = useState([]);
   const [listLoading, setListLoading] = useState(false);
   const [listError, setListError] = useState(null);
-  const [listLoaded, setListLoaded] = useState(false);
 
   const [tableSearch, setTableSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -49,7 +48,6 @@ export default function PendingMembershipPage() {
     setTableSearch('');
     setPage(1);
     setPendingList([]);
-    setListLoaded(false);
     setListError(null);
 
     if (!val) return;
@@ -60,7 +58,6 @@ export default function PendingMembershipPage() {
       const data = await fetchPendingMembershipByGym(val);
       const items = Array.isArray(data) ? data : (data?.data ?? data?.content ?? []);
       setPendingList(items);
-      setListLoaded(true);
     } catch (err) {
       setListError(err.response?.data?.message || err.message || 'Gagal memuat data.');
     } finally {
@@ -68,23 +65,19 @@ export default function PendingMembershipPage() {
     }
   }
 
-  async function handleMemberSearch() {
+  function handleMemberSearch() {
     if (!gymSelected) return;
     setMemberLoading(true);
     setMemberSearched(true);
     setSelectedMember(null);
-    try {
-      // Search member from pending list by name
-      const q = memberName.trim().toLowerCase();
-      const found = pendingList.filter((m) =>
-        !q || (m.name ?? '').toLowerCase().includes(q)
-      );
-      setMemberResults(found);
-    } catch (err) {
-      setMemberResults([]);
-    } finally {
-      setMemberLoading(false);
-    }
+
+    // Search member from pending list by name — filter lokal, gak ada I/O
+    const q = memberName.trim().toLowerCase();
+    const found = pendingList.filter((m) =>
+      !q || (m.name ?? '').toLowerCase().includes(q)
+    );
+    setMemberResults(found);
+    setMemberLoading(false);
   }
 
   // Parse additionalInformation JSON
@@ -133,7 +126,7 @@ export default function PendingMembershipPage() {
 
       {/* ── Pending Member (top card) ── */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="bg-blue-600 px-5 py-3 flex items-center gap-2">
+        <div className="bg-violet-600 px-5 py-3 flex items-center gap-2">
           <Info className="w-4 h-4 text-white flex-shrink-0" />
           <span className="text-white text-sm font-semibold">Gym Selection Required</span>
         </div>
@@ -210,7 +203,7 @@ export default function PendingMembershipPage() {
           {/* Total & packages */}
           <div>
             <p className="text-lg font-bold text-slate-800 mb-3">
-              Total : {selectedMember ? formatIDR(totalAmount) : (gymSelected ? 'Rp. 0.00' : '')}
+              Total : {selectedMember ? formatIDR(totalAmount) : (gymSelected ? formatCurrency(0) : '')}
             </p>
             <div className="rounded-lg border border-gray-200 overflow-hidden">
               <table className="w-full text-sm">
@@ -228,7 +221,8 @@ export default function PendingMembershipPage() {
                     <tr key={i} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-slate-800">{p.description ?? '-'}</td>
                       <td className="px-4 py-3 font-mono text-slate-700">{formatIDR(p.amount)}</td>
-                      <td className="px-4 py-3 font-mono text-slate-700">Rp. 0</td>
+                      {/* Gak ada field discount per-package di additionalInformation — jangan dikarang jadi Rp 0 */}
+                      <td className="px-4 py-3 font-mono text-slate-400">-</td>
                       <td className="px-4 py-3">
                         <span className="px-2 py-0.5 bg-violet-50 text-violet-700 rounded text-xs font-bold">{p.type ?? '-'}</span>
                       </td>
@@ -266,7 +260,7 @@ export default function PendingMembershipPage() {
           <>
             <div className="px-4 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <button onClick={handleExportCSV} className="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 rounded hover:bg-blue-700">CSV</button>
+                <button onClick={handleExportCSV} className="px-3 py-1.5 text-xs font-bold text-white bg-violet-600 rounded hover:bg-violet-700">CSV</button>
                 <button onClick={handleExportCSV} className="px-3 py-1.5 text-xs font-bold text-white bg-green-600 rounded hover:bg-green-700">Excel</button>
                 <button onClick={() => window.print()} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-gray-500 rounded hover:bg-gray-600">
                   <Printer className="w-3.5 h-3.5" /> Print

@@ -79,6 +79,8 @@ export default function ProductPage() {
   }, []);
 
   useEffect(() => {
+    // Fetch on mount — sinkronisasi state dengan server, bukan derived value.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadItems();
   }, [loadItems]);
 

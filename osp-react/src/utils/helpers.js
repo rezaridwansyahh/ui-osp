@@ -3,9 +3,8 @@ const AVATAR_COLORS = [
   'from-violet-500 to-violet-700',
   'from-emerald-500 to-teal-500',
   'from-orange-500 to-red-500',
-  'from-purple-500 to-indigo-500',
+  'from-violet-400 to-violet-600',
   'from-pink-500 to-rose-500',
-  'from-cyan-500 to-blue-500',
   'from-amber-500 to-orange-500',
   'from-lime-500 to-green-500',
 ];
@@ -36,26 +35,9 @@ export function formatBytes(bytes) {
   return (bytes / 1048576).toFixed(1) + ' MB';
 }
 
-// Format angka ke format currency Indonesia
+// Format angka ke format currency Indonesia — satu-satunya format Rupiah
+// yang dipakai di seluruh app, biar konsisten (dulu ada 4 gaya beda-beda:
+// "IDR 1.234", "Rp 1.234", "Rp. 1.234", angka polos tanpa prefix).
 export function formatCurrency(amount) {
-  return 'Rp ' + amount.toLocaleString('id-ID');
-}
-
-// Format angka ke format IDR (lebih simple)
-export function formatIDR(amount) {
-  return 'IDR ' + amount.toLocaleString();
-}
-
-// Export data tabel ke CSV lalu download
-export function exportTableToCSV(headers, rows, filename = 'export.csv') {
-  const headerLine = headers.map((h) => `"${h}"`).join(',');
-  const dataLines = rows.map((row) =>
-    row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-  );
-  const csv = [headerLine, ...dataLines].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
+  return 'Rp ' + (Number(amount) || 0).toLocaleString('id-ID');
 }

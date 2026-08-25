@@ -1,9 +1,8 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { getToken, isTokenValid, clearAuth, getUser } from '../utils/jwt';
 import { loginAPI } from '../services/authService';
 import { applyTheme, resetTheme } from '../services/themeService';
-
-const AuthContext = createContext(null);
+import { AuthContext } from './AuthContextObject';
 
 // Tentuin apakah user punya akses gym yang valid.
 // gymList kosong ATAU brandId null/undefined → dianggap no-gym.
@@ -71,10 +70,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth harus dipanggil di dalam AuthProvider');
-  return ctx;
 }

@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 // Redirect ke /login kalau user belum autentikasi
 export default function ProtectedRoute({ children }) {

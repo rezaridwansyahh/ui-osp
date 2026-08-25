@@ -1,15 +1,21 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Power, Maximize, LogOut, ChevronRight, MapPin } from 'lucide-react';
+import { Menu, Power, Maximize, User, KeyRound, ChevronRight, MapPin } from 'lucide-react';
 import { BREADCRUMBS } from '../../utils/constants';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
+import EditProfileModal from './EditProfileModal';
+import ResetPasswordModal from './ResetPasswordModal';
 
-export default function Navbar({ onToggleSidebar }) {
+export default function Navbar({ onToggleSidebar, sidebarCollapsed, onToggleSidebarCollapsed }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const crumbs = BREADCRUMBS[location.pathname] || [{ label: 'Home' }];
 
   const gymName = user?.gymName || user?.gymList?.[0]?.name;
+
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -69,21 +75,55 @@ export default function Navbar({ onToggleSidebar }) {
         <div className="h-6 w-px bg-gray-200 hidden sm:block" />
 
         <div className="flex items-center gap-1">
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Power">
-            <Power className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-          </button>
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors group" title="Fullscreen">
-            <Maximize className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-          </button>
           <button
             onClick={handleLogout}
             className="p-2 rounded-lg hover:bg-red-50 transition-colors group"
             title="Logout"
           >
-            <LogOut className="w-5 h-5 text-red-400 group-hover:text-red-600" />
+            <Power className="w-5 h-5 text-red-400 group-hover:text-red-600" />
+          </button>
+          <button
+            onClick={onToggleSidebarCollapsed}
+            aria-pressed={sidebarCollapsed}
+            className={`p-2 rounded-lg border transition-colors group ${
+              sidebarCollapsed
+                ? 'border-violet-300 bg-violet-50'
+                : 'border-transparent hover:bg-gray-100'
+            }`}
+            title={sidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'}
+          >
+            <Maximize
+              className={`w-5 h-5 ${
+                sidebarCollapsed ? 'text-violet-600' : 'text-gray-400 group-hover:text-gray-600'
+              }`}
+            />
+          </button>
+          <button
+            onClick={() => setShowEditProfile(true)}
+            className="p-2 rounded-lg hover:bg-violet-50 transition-colors group"
+            title="Edit Profile"
+          >
+            <User className="w-5 h-5 text-gray-400 group-hover:text-violet-600" />
+          </button>
+          <button
+            onClick={() => setShowResetPassword(true)}
+            className="p-2 rounded-lg hover:bg-violet-50 transition-colors group"
+            title="Reset Password"
+          >
+            <KeyRound className="w-5 h-5 text-gray-400 group-hover:text-violet-600" />
           </button>
         </div>
       </div>
+
+      <EditProfileModal
+        isOpen={showEditProfile}
+        onClose={() => setShowEditProfile(false)}
+        user={user}
+      />
+      <ResetPasswordModal
+        isOpen={showResetPassword}
+        onClose={() => setShowResetPassword(false)}
+      />
     </header>
   );
 }

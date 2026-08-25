@@ -15,7 +15,7 @@ import {
   Snowflake,
   RefreshCw,
 } from 'lucide-react';
-import { fetchAllCustomers, mapApiCustomer } from '../services/memberService';
+import { fetchAllCustomersCached, mapApiCustomer } from '../services/memberService';
 import { useShowToast } from '../contexts/ToastContext';
 import Avatar from '../components/ui/Avatar';
 import Badge from '../components/ui/Badge';
@@ -26,7 +26,7 @@ import StatCard from '../components/ui/StatCard';
 import SlidePanel from '../components/ui/SlidePanel';
 import FilterPanel, { FilterField } from '../components/ui/FilterPanel';
 import { STATUS_DOT_COLORS } from '../utils/constants';
-import { exportTableToCSV, getAvatarColor, getInitials } from '../utils/helpers';
+import { getAvatarColor, getInitials } from '../utils/helpers';
 
 const PAGE_SIZE = 8;
 
@@ -57,11 +57,11 @@ export default function MembersPage() {
 
   const [sortConfig, setSortConfig] = useState(null);
 
-  const loadMembers = useCallback(async () => {
+  const loadMembers = useCallback(async (force = false) => {
     setLoading(true);
     setLoadError(null);
     try {
-      const data = await fetchAllCustomers();
+      const data = await fetchAllCustomersCached({ force });
       setMembers((Array.isArray(data) ? data : []).map(mapApiCustomer));
     } catch (err) {
       console.error('Gagal fetch customers:', err);
@@ -72,6 +72,8 @@ export default function MembersPage() {
   }, []);
 
   useEffect(() => {
+    // Fetch on mount — sinkronisasi state dengan server, bukan derived value.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadMembers();
   }, [loadMembers]);
 
@@ -126,29 +128,30 @@ export default function MembersPage() {
     return list;
   }, [filteredMembers, sortConfig]);
 
-  useEffect(() => {
-    // Reset ke halaman 1 kalo query search atau filter apply berubah
+  // Reset ke halaman 1 kalo query search atau filter apply berubah — diadaptasi
+  // saat render (bukan effect), sesuai pola resmi React utk "adjusting state
+  // when a prop changes": https://react.dev/learn/you-might-not-need-an-effect
+  const [prevFilterKey, setPrevFilterKey] = useState({ searchQuery, appliedFilter });
+  if (prevFilterKey.searchQuery !== searchQuery || prevFilterKey.appliedFilter !== appliedFilter) {
+    setPrevFilterKey({ searchQuery, appliedFilter });
     setCurrentPage(1);
-  }, [searchQuery, appliedFilter]);
-
-  useEffect(() => {
-    // Jaga supaya currentPage gak kebablasan kalo hasil filter susut
-    const pages = Math.max(1, Math.ceil(sortedMembers.length / PAGE_SIZE));
-    if (currentPage > pages) setCurrentPage(pages);
-  }, [sortedMembers.length, currentPage]);
+  }
 
   const totalFiltered = sortedMembers.length;
   const totalPages = Math.ceil(totalFiltered / PAGE_SIZE) || 1;
+  // Derived, bukan disimpan sebagai state — otomatis gak pernah kebablasan
+  // kalo hasil filter susut, tanpa perlu effect terpisah buat clamp.
+  const safePage = Math.min(currentPage, totalPages);
   const pageSlice = useMemo(() => {
     // Pagination: potong list yang udah di-sort
-    const start = (currentPage - 1) * PAGE_SIZE;
+    const start = (safePage - 1) * PAGE_SIZE;
     return sortedMembers.slice(start, start + PAGE_SIZE);
-  }, [sortedMembers, currentPage]);
+  }, [sortedMembers, safePage]);
 
   const showRangeText =
     totalFiltered > 0
-      ? `${(currentPage - 1) * PAGE_SIZE + 1}-${Math.min(
-          currentPage * PAGE_SIZE,
+      ? `${(safePage - 1) * PAGE_SIZE + 1}-${Math.min(
+          safePage * PAGE_SIZE,
           totalFiltered
         )}`
       : '0';
@@ -268,7 +271,7 @@ export default function MembersPage() {
               variant="outline"
               size="sm"
               icon={RefreshCw}
-              onClick={loadMembers}
+              onClick={() => loadMembers(true)}
               disabled={loading}
               aria-label="Refresh members"
             />
@@ -422,7 +425,7 @@ export default function MembersPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {pageSlice.map((m, i) => {
-                const globalIdx = (currentPage - 1) * PAGE_SIZE + i + 1;
+                const globalIdx = (safePage - 1) * PAGE_SIZE + i + 1;
                 return (
                   <tr
                     key={m.id}
@@ -482,7 +485,7 @@ export default function MembersPage() {
             Showing {showRangeText} of {totalFiltered} members
           </p>
           <Pagination
-            currentPage={currentPage}
+            currentPage={safePage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
@@ -534,7 +537,7 @@ export default function MembersPage() {
               </div>
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                 <div className="w-9 h-9 bg-white rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-4 h-4 text-blue-500" />
+                  <Mail className="w-4 h-4 text-violet-500" />
                 </div>
                 <div>
                   <p className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">
