@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useShowToast } from '../contexts/ToastContext';
-import { exportTableToCSV } from '../utils/helpers';
-import api from '../services/api';
+import * as XLSX from 'xlsx';
+import { fetchOrders } from '../services/orderService';
 
 const PAGE_SIZE = 20;
 
@@ -102,16 +102,14 @@ export default function DailySalesReportPage() {
     setLoading(true);
     setError(null);
     try {
-      const params = {
+      const res = await fetchOrders({
         gymId,
         startDate: dateRange.startDate,
         endDate: dateRange.endDate,
         page: targetPage,
         size: PAGE_SIZE,
         sort: 'createdDate,desc',
-      };
-
-      const { data: res } = await api.get('/placeorder/details-order', { params });
+      });
 
       setRows(res.content ?? []);
       setTotalPages(res.totalPages ?? 0);
@@ -152,11 +150,16 @@ export default function DailySalesReportPage() {
 
   // ── Export ────────────────────────────────────────────────────
   function handleCSV() {
-    const headers = COLS.map((c) => c.label);
-    const exportRows = filtered.map((o) => COLS.map((c) => c.render(o)));
-    exportTableToCSV(headers, exportRows, 'daily-sales-report.csv');
-    showToast?.('CSV berhasil diunduh', 'success');
-  }
+  const headers = COLS.map((c) => c.label);
+  const exportRows = filtered.map((o) => COLS.map((c) => c.render(o)));
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...exportRows]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Daily Sales Report');
+  XLSX.writeFile(workbook, 'daily-sales-report.xlsx');
+
+  showToast?.('XLSX berhasil diunduh', 'success');
+}
 
   // ── Windowed pagination ───────────────────────────────────────
   function getPageNumbers() {
@@ -198,6 +201,9 @@ export default function DailySalesReportPage() {
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </select>
+            {gymList.length === 0 && (
+              <p className="text-xs text-amber-600 mt-1">No gym assigned to your account.</p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Start Date</label>

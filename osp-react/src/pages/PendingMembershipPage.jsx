@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { AlertTriangle, Info, Building2, FileX, Printer, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { exportTableToCSV } from '../utils/helpers';
+import * as XLSX from 'xlsx';
 import { useShowToast } from '../contexts/ToastContext';
-import api from '../services/api';
+import { fetchPendingMembershipByGym } from '../services/memberService';
 
 const PAGE_SIZE = 10;
 
@@ -57,7 +57,7 @@ export default function PendingMembershipPage() {
     // Load pending membership list
     setListLoading(true);
     try {
-      const { data } = await api.get('/customers/search/pending-membership-gym/', { params: { gymId: val } });
+      const data = await fetchPendingMembershipByGym(val);
       const items = Array.isArray(data) ? data : (data?.data ?? data?.content ?? []);
       setPendingList(items);
       setListLoaded(true);
@@ -117,11 +117,16 @@ export default function PendingMembershipPage() {
   const paged = filteredList.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   function handleExportCSV() {
-    const headers = ['DSP ID', 'Merchant', 'Name', 'Email', 'Key', 'Type', 'Created Time'];
-    const rows = filteredList.map((r) => [r.id, r.gymName ?? '-', r.name ?? '-', r.email ?? '-', r.keyfob ?? '-', r.membershipType ?? '-', formatDate(r.createdDate)]);
-    exportTableToCSV(headers, rows, 'pending_membership.csv');
-    showToast('CSV exported', 'success');
-  }
+  const headers = ['DSP ID', 'Merchant', 'Name', 'Email', 'Key', 'Type', 'Created Time'];
+  const rows = filteredList.map((r) => [r.id, r.gymName ?? '-', r.name ?? '-', r.email ?? '-', r.keyfob ?? '-', r.membershipType ?? '-', formatDate(r.createdDate)]);
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Pending Membership');
+  XLSX.writeFile(workbook, 'pending_membership.xlsx');
+
+  showToast('XLSX exported', 'success');
+}
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
@@ -141,8 +146,11 @@ export default function PendingMembershipPage() {
                 Select Gym Location <span className="text-red-500">*</span>
               </label>
               <select value={selectedGymId} onChange={(e) => handleGymChange(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400">
-                <option value="">-- Please Select a Gym --</option>
+                disabled={gymList.length === 0}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-violet-400 disabled:bg-gray-50 disabled:text-gray-400">
+                <option value="">
+                  {gymList.length === 0 ? '-- No Gym Assigned --' : '-- Please Select a Gym --'}
+                </option>
                 {gymList.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
             </div>
@@ -157,7 +165,11 @@ export default function PendingMembershipPage() {
           {!gymSelected && (
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
               <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-700">Please select a gym first before proceeding with pending member management.</p>
+              <p className="text-sm text-amber-700">
+                {gymList.length === 0
+                  ? 'No gym is assigned to your account. Contact your administrator to get gym access before managing pending members.'
+                  : 'Please select a gym first before proceeding with pending member management.'}
+              </p>
             </div>
           )}
 

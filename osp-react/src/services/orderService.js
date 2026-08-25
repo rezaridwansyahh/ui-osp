@@ -6,10 +6,13 @@ import api from './api';
  * @param {number} params.gymId — ID gym (-1 untuk semua gym)
  * @param {string} params.startDate — Format YYYY-MM-DD
  * @param {string} params.endDate — Format YYYY-MM-DD
+ * @param {number} [params.page] — Halaman (0-based), untuk server-side pagination
+ * @param {number} [params.size] — Jumlah data per halaman
+ * @param {string} [params.sort] — Format 'field,asc' atau 'field,desc'
  */
-export async function fetchOrders({ gymId = -1, startDate, endDate }) {
+export async function fetchOrders({ gymId = -1, startDate, endDate, page, size, sort }) {
   const { data } = await api.get('/placeorder/details-order', {
-    params: { gymId, startDate, endDate },
+    params: { gymId, startDate, endDate, page, size, sort },
   });
   return data;
 }

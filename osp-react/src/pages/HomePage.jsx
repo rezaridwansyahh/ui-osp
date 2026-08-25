@@ -329,11 +329,13 @@ function formatLoginTime(date) {
   return `${day} ${month}, ${hours}:${minutes}`;
 }
 
-function WelcomeBanner({ user }) {
+function WelcomeBanner({ user, hasGymAccess }) {
   const displayName = user?.name || user?.username || 'Guest';
   const userId = user?.id || '-';
   const role = user?.role || 'USER';
-  const gymName = user?.gymName || user?.gymList?.[0]?.name || '-';
+  const gymName = hasGymAccess
+    ? user?.gymName || user?.gymList?.[0]?.name || '-'
+    : 'No gym assigned';
   const loginTime = formatLoginTime(new Date());
 
   return (
@@ -361,7 +363,7 @@ function WelcomeBanner({ user }) {
         <div className="grid grid-cols-2 gap-3 lg:gap-4">
           <InfoBubble label="User ID" value={userId} />
           <InfoBubble label="Access Type" value={role} withDot />
-          <InfoBubble label="Gym Access" value={gymName} />
+          <InfoBubble label="Gym Access" value={gymName} warn={!hasGymAccess} />
           <InfoBubble label="Login Time" value={loginTime} />
         </div>
       </div>
@@ -369,11 +371,23 @@ function WelcomeBanner({ user }) {
   );
 }
 
-function InfoBubble({ label, value, withDot = false }) {
+function InfoBubble({ label, value, withDot = false, warn = false }) {
   return (
-    <div className="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
+    <div
+      className={
+        warn
+          ? 'bg-amber-500/10 backdrop-blur-sm border border-amber-400/30 rounded-xl px-4 py-3'
+          : 'bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3'
+      }
+    >
       <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">{label}</p>
-      <p className="text-white font-bold text-sm mt-0.5 flex items-center gap-1.5">
+      <p
+        className={
+          warn
+            ? 'text-amber-300 font-bold text-sm mt-0.5 flex items-center gap-1.5'
+            : 'text-white font-bold text-sm mt-0.5 flex items-center gap-1.5'
+        }
+      >
         {withDot && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
         {value}
       </p>
@@ -454,11 +468,11 @@ function ChartsRowPaymentAndGender() {
 }
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, hasGymAccess } = useAuth();
 
   return (
     <div className="p-4 lg:p-6">
-      <WelcomeBanner user={user} />
+      <WelcomeBanner user={user} hasGymAccess={hasGymAccess} />
       <StatCardsSection />
       <ChartsRowTrendAndStatus />
       <ChartsRowPaymentAndGender />

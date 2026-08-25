@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   MapPin,
@@ -25,6 +25,9 @@ import {
   PAYMENT_METHODS,
   generateMonths,
 } from '../data/monthlyPayment';
+import { fetchPaymentTypes, fetchMasterGyms } from '../services/masterService';
+import { searchCustomers, mapApiCustomer } from '../services/memberService';
+import { useAuth } from '../contexts/AuthContext';
 import { useShowToast } from '../contexts/ToastContext';
 import Avatar from '../components/ui/Avatar';
 import Badge from '../components/ui/Badge';
@@ -34,15 +37,83 @@ import { getAvatarColor, getInitials } from '../utils/helpers';
 
 export default function MonthlyPaymentPage() {
   const showToast = useShowToast();
+  const { user } = useAuth();
 
-  const [selectedGym, setSelectedGym] = useState('AF Kemang');
+  const [selectedGym, setSelectedGym] = useState('');
+  const [gymList, setGymList] = useState(null); // null = belum loaded
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchMasterGyms()
+      .then((data) => {
+        if (cancelled) return;
+        const names = Array.isArray(data) ? data.map((g) => g.name).filter(Boolean) : [];
+        setGymList(names);
+        if (names.length > 0) setSelectedGym(names[0]);
+      })
+      .catch((err) => {
+        console.error('Gagal fetch master gyms:', err);
+        // biarin null -> fallback ke PAYMENT_GYMS dummy di bawah
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Fallback ke dummy PAYMENT_GYMS selama loading/kalau fetch gagal
+  const gymOptions = gymList && gymList.length > 0 ? gymList : PAYMENT_GYMS;
+
+  useEffect(() => {
+    // Set default begitu fallback dummy dipakai (fetch gagal & belum ada pilihan)
+    if (!selectedGym && gymList !== null && gymList.length === 0) {
+      setSelectedGym(PAYMENT_GYMS[0]);
+    }
+  }, [selectedGym, gymList]);
+
   const [selectedMember, setSelectedMember] = useState(null);
   const [monthStatuses, setMonthStatuses] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
   const [memberSearchOpen, setMemberSearchOpen] = useState(false);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [payModalOpen, setPayModalOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [paymentMethod, setPaymentMethod] = useState('');
+
+  // Payment types dari backend (GET /master/paymenttype). PAYMENT_METHODS
+  // dummy dipakai sebagai fallback selama loading/kalau fetch gagal, biar
+  // radio button gak kosong.
+  const [paymentTypes, setPaymentTypes] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPaymentTypes()
+      .then((data) => {
+        if (!cancelled) setPaymentTypes(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error('Gagal fetch payment types:', err);
+        // biarin null -> fallback ke PAYMENT_METHODS dummy
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Label yang ditampilkan di radio button: field asli backend adalah
+  // {id, paymentType, cardType, bank, internalMDR, externalMDR} — bukan
+  // {bank, type, description} seperti di dokumentasi. Susun label dari
+  // paymentType + cardType/bank biar tiap opsi kebedain jelas.
+  const paymentMethodOptions = useMemo(() => {
+    if (paymentTypes && paymentTypes.length > 0) {
+      return paymentTypes.map((pt) => {
+        const parts = [pt.paymentType, pt.cardType, pt.bank].filter(Boolean);
+        return {
+          value: String(pt.id),
+          label: parts.join(' - ') || pt.paymentType || String(pt.id),
+        };
+      });
+    }
+    return PAYMENT_METHODS.map((p) => ({ value: p, label: p }));
+  }, [paymentTypes]);
 
   // Ringkasan: jumlah bulan collect/waived dan subtotal dari status per bulan
   const stats = useMemo(() => {
@@ -72,18 +143,73 @@ export default function MonthlyPaymentPage() {
     return months.slice(-24);
   }, [selectedMember]);
 
-  // Daftar anggota di modal sesuai keyword (nama atau ID)
-  const filteredModalMembers = useMemo(() => {
-    const q = memberSearchQuery.trim().toLowerCase();
-    if (!q) return MEMBERS_PAYMENT;
-    return MEMBERS_PAYMENT.filter(
-      (m) =>
-        m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)
-    );
-  }, [memberSearchQuery]);
+  // Modal search sekarang pakai GET /customers/search/ (butuh brandId + search
+  // keyword) alih-alih narik SEMUA customer sekaligus. fetchAllCustomers() di
+  // MembersPage/awal kerjaan sebelumnya kebukti bikin browser freeze pas
+  // dipanggil dari sini — datanya kegedean buat di-map+parse sinkron tiap
+  // buka modal. Search-based jauh lebih ringan karena backend cuma balikin
+  // yang match keyword.
+  const [searchResults, setSearchResults] = useState(null); // null = belum search
+  const [memberLoading, setMemberLoading] = useState(false);
+  const [memberLoadError, setMemberLoadError] = useState(false);
+
+  const mapCustomerForPage = (c) => {
+    const base = mapApiCustomer(c);
+    return {
+      ...base,
+      // Field yang dibutuhkan halaman ini tapi gak ada langsung dari
+      // mapApiCustomer (dibikin dari POS Backend, bukan payment-specific):
+      signup: base.register !== '-' ? base.register : new Date().toISOString().slice(0, 10),
+      monthlyAmount: base.billAmount || 0,
+      type: base.status || '-', // gak ada field "type" (EFT/PIF) di /customers asli
+      lastPayment: '-', // gak ada field ini di /customers asli
+    };
+  };
+
+  // Debounce: search jalan 400ms setelah user berhenti ngetik, minimal 2 karakter.
+  useEffect(() => {
+    const q = memberSearchQuery.trim();
+    if (!memberSearchOpen || q.length < 2) {
+      setSearchResults(null);
+      return;
+    }
+    if (!user?.brandId) {
+      setMemberLoadError(true);
+      return;
+    }
+    let cancelled = false;
+    setMemberLoading(true);
+    setMemberLoadError(false);
+    const timer = setTimeout(() => {
+      searchCustomers(q, user.brandId)
+        .then((data) => {
+          if (cancelled) return;
+          setSearchResults((Array.isArray(data) ? data : []).map(mapCustomerForPage));
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          console.error('Gagal search customers:', err);
+          setMemberLoadError(true);
+          setSearchResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setMemberLoading(false);
+        });
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [memberSearchQuery, memberSearchOpen, user?.brandId]);
+
+  // Belum ada keyword (< 2 karakter) -> tampilin beberapa contoh dummy biar
+  // modal gak kosong melompong; begitu user ngetik, hasil search asli dipakai.
+  const filteredModalMembers = searchResults !== null ? searchResults : MEMBERS_PAYMENT.slice(0, 6);
 
   const openMemberSearch = () => {
     setMemberSearchQuery('');
+    setSearchResults(null);
+    setMemberLoadError(false);
     setMemberSearchOpen(true);
     setTimeout(() => document.getElementById('mp-modal-member-search')?.focus(), 100);
   };
@@ -106,7 +232,7 @@ export default function MonthlyPaymentPage() {
     setSelectedMember(null);
     setMonthStatuses({});
     setCurrentStep(1);
-    setPaymentMethod('Cash');
+    setPaymentMethod('');
   };
 
   const setMonthStatus = (key, status) => {
@@ -174,7 +300,7 @@ export default function MonthlyPaymentPage() {
                 onChange={(e) => setSelectedGym(e.target.value)}
                 className="px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none cursor-pointer"
               >
-                {PAYMENT_GYMS.map((g) => (
+                {gymOptions.map((g) => (
                   <option key={g} value={g}>
                     {g}
                   </option>
@@ -391,21 +517,21 @@ export default function MonthlyPaymentPage() {
                         Select Payment Method
                       </label>
                       <div className="flex gap-2 flex-wrap">
-                        {PAYMENT_METHODS.map((p) => (
+                        {paymentMethodOptions.map((opt) => (
                           <label
-                            key={p}
+                            key={opt.value}
                             className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg cursor-pointer hover:border-violet-300 has-[:checked]:border-violet-500 has-[:checked]:bg-violet-50 transition-all"
                           >
                             <input
                               type="radio"
                               name="payMethod"
-                              value={p}
-                              checked={paymentMethod === p}
-                              onChange={() => setPaymentMethod(p)}
+                              value={opt.value}
+                              checked={paymentMethod === opt.value}
+                              onChange={() => setPaymentMethod(opt.value)}
                               className="accent-violet-600 w-3.5 h-3.5"
                             />
                             <span className="text-xs font-semibold text-gray-700">
-                              {p}
+                              {opt.label}
                             </span>
                           </label>
                         ))}
@@ -551,13 +677,21 @@ export default function MonthlyPaymentPage() {
                 type="text"
                 value={memberSearchQuery}
                 onChange={(e) => setMemberSearchQuery(e.target.value)}
-                placeholder="Search by member ID or name..."
+                placeholder="Ketik minimal 2 huruf nama/ID member..."
                 className="w-full pl-10 pr-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none"
               />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 min-h-0">
-            {filteredModalMembers.length === 0 ? (
+            {memberLoading ? (
+              <div className="text-center py-8 text-sm text-gray-400">
+                Mencari member...
+              </div>
+            ) : memberLoadError ? (
+              <div className="text-center py-8 text-sm text-red-500">
+                Gagal mencari member dari server.
+              </div>
+            ) : filteredModalMembers.length === 0 ? (
               <div className="text-center py-8 text-sm text-gray-400">
                 No members found.
               </div>

@@ -6,8 +6,13 @@ import {
   resetOverrideForBrand,
 } from '../services/themeOverrideService';
 import { applyTheme } from '../services/themeService';
+import {
+  getCustomBrands,
+  addCustomBrand,
+  removeCustomBrand,
+} from '../services/customBrandService';
 
-const BRAND_OPTIONS = [
+const BASE_BRAND_OPTIONS = [
   { id: 1, name: 'Anytime Fitness' },
   { id: 2, name: 'Bee Active' },
   { id: 3, name: 'OSP' },
@@ -87,6 +92,13 @@ export default function ThemeAdminPanel() {
   const [logoUrlInput, setLogoUrlInput] = useState('');
   const [urlError, setUrlError] = useState('');
   const [urlLoading, setUrlLoading] = useState(false);
+
+  // state buat fitur "Brand Baru"
+  const [customBrands, setCustomBrands] = useState(getCustomBrands());
+  const [showAddBrand, setShowAddBrand] = useState(false);
+  const [newBrandName, setNewBrandName] = useState('');
+
+  const brandOptions = [...BASE_BRAND_OPTIONS, ...customBrands];
 
   // load data (override kalau ada, fallback ke base theme) tiap ganti brand
   useEffect(() => {
@@ -193,7 +205,7 @@ export default function ThemeAdminPanel() {
   };
 
   const handleResetBrand = () => {
-    if (!confirm(`Reset tema ${BRAND_OPTIONS.find((b) => b.id === selectedBrand)?.name} ke default?`)) return;
+    if (!confirm(`Reset tema ${brandOptions.find((b) => b.id === selectedBrand)?.name} ke default?`)) return;
     resetOverrideForBrand(selectedBrand);
     const key = String(selectedBrand);
     setFormData(brandThemes[key] ?? brandThemes['default']);
@@ -201,25 +213,103 @@ export default function ThemeAdminPanel() {
     setSaved(false);
   };
 
+  // ── Fitur Brand Baru ──────────────────────────────────────────
+  const handleAddBrand = () => {
+    if (!newBrandName.trim()) return;
+    const baseIds = BASE_BRAND_OPTIONS.map((b) => b.id);
+    const newBrand = addCustomBrand(newBrandName, baseIds);
+
+    // kasih starting point: default theme + nama brand baru,
+    // biar pas dipilih formData-nya langsung terisi bukan kosong
+    saveOverrideForBrand(newBrand.id, {
+      ...brandThemes['default'],
+      brandName: newBrandName.trim(),
+    });
+
+    setCustomBrands(getCustomBrands());
+    setNewBrandName('');
+    setShowAddBrand(false);
+    setSelectedBrand(newBrand.id);
+  };
+
+  const handleDeleteCustomBrand = (id) => {
+    if (!confirm('Hapus brand ini? Snippet yang belum di-export ke brandThemes.json akan hilang.')) return;
+    removeCustomBrand(id);
+    resetOverrideForBrand(id);
+    setCustomBrands(getCustomBrands());
+    if (selectedBrand === id) setSelectedBrand(BASE_BRAND_OPTIONS[0].id);
+  };
+
+  const handleExportJSON = () => {
+    const snippet = JSON.stringify({ [selectedBrand]: formData }, null, 2);
+    navigator.clipboard
+      .writeText(snippet)
+      .then(() => alert('Snippet disalin. Paste ke brandThemes.json lalu commit.'))
+      .catch(() => prompt('Copy snippet ini ke brandThemes.json:', snippet));
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-xl font-bold mb-4 text-gray-900">Theme Admin Panel</h1>
 
       {/* Brand selector */}
-      <div className="flex gap-2 mb-6">
-        {BRAND_OPTIONS.map((brand) => (
-          <button
-            key={brand.id}
-            onClick={() => setSelectedBrand(brand.id)}
-            className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
-              selectedBrand === brand.id
-                ? 'border-2 border-blue-600 bg-blue-50 font-semibold text-blue-700'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            {brand.name}
-          </button>
+      <div className="flex gap-2 mb-6 flex-wrap items-center">
+        {brandOptions.map((brand) => (
+          <div key={brand.id} className="relative group">
+            <button
+              onClick={() => setSelectedBrand(brand.id)}
+              className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                selectedBrand === brand.id
+                  ? 'border-2 border-blue-600 bg-blue-50 font-semibold text-blue-700'
+                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {brand.name}
+            </button>
+            {customBrands.some((b) => b.id === brand.id) && (
+              <button
+                onClick={() => handleDeleteCustomBrand(brand.id)}
+                className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] hidden group-hover:flex items-center justify-center"
+                title="Hapus brand ini"
+              >
+                ×
+              </button>
+            )}
+          </div>
         ))}
+
+        {showAddBrand ? (
+          <div className="flex gap-1.5 items-center">
+            <input
+              type="text"
+              autoFocus
+              placeholder="Nama brand baru"
+              value={newBrandName}
+              onChange={(e) => setNewBrandName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddBrand()}
+              className="px-2 py-1.5 text-sm rounded-md border border-gray-300"
+            />
+            <button
+              onClick={handleAddBrand}
+              className="px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white font-medium"
+            >
+              Tambah
+            </button>
+            <button
+              onClick={() => { setShowAddBrand(false); setNewBrandName(''); }}
+              className="px-2 py-1.5 text-sm text-gray-500"
+            >
+              Batal
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowAddBrand(true)}
+            className="px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600"
+          >
+            + Brand Baru
+          </button>
+        )}
       </div>
 
       {/* Logo section */}
@@ -365,6 +455,12 @@ export default function ThemeAdminPanel() {
           className="px-5 py-2.5 rounded-lg bg-white text-red-600 font-semibold text-sm border border-red-600 hover:bg-red-50 transition-colors"
         >
           Reset ke Default
+        </button>
+        <button
+          onClick={handleExportJSON}
+          className="px-5 py-2.5 rounded-lg bg-white text-gray-700 font-semibold text-sm border border-gray-300 hover:bg-gray-50 transition-colors"
+        >
+          Export JSON
         </button>
         {saved && <span className="text-green-600 text-sm">✓ Tersimpan</span>}
       </div>

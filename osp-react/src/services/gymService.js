@@ -4,6 +4,6 @@ import api from './api';
 const EXCLUDED_GYM_NAMES = ['Development', 'MEMBR Merchant'];
 
 export async function fetchGyms() {
-  const { data } = await api.get('/pos-backend/master/gyms');
+  const { data } = await api.get('/master/gyms');
   return data.filter((gym) => !EXCLUDED_GYM_NAMES.includes(gym.name));
 }

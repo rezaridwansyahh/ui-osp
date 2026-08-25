@@ -37,6 +37,25 @@
     "logoBg": "linear-gradient(135deg, #f59e0b, #d97706)",
     "logoText": "BA"
   },
+  "3": {
+    "brandName": "OSP",
+    "sidebarBg": "#0C121C",
+    "sidebarBorder": "#1E293B",
+    "userCardBg": "rgba(113,72,252,0.12)",
+    "navActiveBg": "rgba(113,72,252,0.25)",
+    "navActiveColor": "#ffffff",
+    "navInactiveColor": "#B8BFC6",
+    "navHoverBg": "rgba(113,72,252,0.15)",
+    "navHoverColor": "#ffffff",
+    "parentActiveColor": "#ffffff",
+    "parentActiveBg": "rgba(113,72,252,0.15)",
+    "childActiveBg": "rgba(113,72,252,0.15)",
+    "childActiveColor": "#ffffff",
+    "childInactiveColor": "#B8BFC6",
+    "borderAccent": "#5A38CC",
+    "logoBg": "linear-gradient(135deg, #7148FC, #5A38CC)",
+    "logoText": "O"
+  },
   "default": {
     "brandName": "OSP",
     "sidebarBg": "#1e293b",

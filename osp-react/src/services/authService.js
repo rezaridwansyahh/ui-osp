@@ -1,24 +1,13 @@
 import api from './api';
 import { saveToken, saveUser } from '../utils/jwt';
 import { fetchGyms } from './gymService';
+import { fetchFranchiseByGymId } from './franchiseService';
 
-// SEBELUM: resolveBrandId(user) parsing role string ("bee active" / "anytime fitness")
-// MASALAH: role brand-agnostic (SystemOperator, Club Manager, dll) gak match apapun,
-// padahal user itu jelas punya gym access yang valid (contoh: SystemOperator dengan
-// Gym Access "AF AKR Tower" tapi logo/tema gak ke-apply).
-//
-// SESUDAH: brandId diturunkan dari gym yang di-assign ke user, bukan dari role.
-// brandId 3 = OSP (admin) — perlu dikonfirmasi apakah admin punya gymId sendiri
-// atau brandId 3 di-set langsung dari backend response.
 async function resolveBrandIdFromGym(user) {
-  // TODO (perlu dikonfirmasi ke backend/mentor): field gym pada user object.
-  // Sementara diasumsikan `user.gymId`, dengan fallback ke `user.gym?.id`.
   const gymId = user.gymId ?? user.gym?.id ?? null;
 
-  // Kalau backend sudah kirim brandId langsung (misal untuk OSP admin = 3), pakai itu
   if (user.brandId) return user.brandId;
-
-  if (!gymId) return null; // gak ada gym context sama sekali → neutral/default theme
+  if (!gymId) return null;
 
   try {
     const gyms = await fetchGyms();
@@ -26,7 +15,26 @@ async function resolveBrandIdFromGym(user) {
     return gym?.brandId ?? null;
   } catch (err) {
     console.error('Gagal fetch gyms saat resolve brandId:', err);
-    return null; // fallback aman: neutral theme, bukan crash
+    return null;
+  }
+}
+
+// UPDATE: endpoint single-gym-lookup (/api/franchise/mappings/gym/:gymId) lagi
+// bug, konsisten 500 walau data mapping-nya valid (cross-checked via
+// /api/franchise/mappings all-mappings). Response-nya juga cuma punya
+// franchiseId, gak pernah ada field areaId terpisah — franchiseId ITU
+// area context yang dipake /items endpoints. Reported ke mentor (pending fix).
+async function resolveFranchiseIdFromGym(user) {
+  const gymId = user.gymId ?? user.gym?.id ?? null;
+
+  if (!gymId || gymId === -1) return null; // -1 = SystemOperator/multi-gym, gak applicable
+
+  try {
+    const franchise = await fetchFranchiseByGymId(gymId);
+    return franchise?.franchiseId ?? null;
+  } catch (err) {
+    console.error('Gagal fetch franchise saat resolve franchiseId:', err);
+    return null; // fallback aman, bukan crash — known backend bug, lihat comment di atas
   }
 }
 
@@ -34,11 +42,16 @@ export async function loginAPI(username, password) {
   try {
     const { data } = await api.post('/api/v2/login', { username, password });
 
-    const brandId = await resolveBrandIdFromGym(data.user);
+    const [brandId, franchiseId] = await Promise.all([
+      resolveBrandIdFromGym(data.user),
+      resolveFranchiseIdFromGym(data.user),
+    ]);
 
     const resolvedUser = {
       ...data.user,
       brandId,
+      franchiseId,
+      areaId: franchiseId, // areaId endpoints pake franchiseId sbg area context
     };
 
     saveToken(data.jwt);

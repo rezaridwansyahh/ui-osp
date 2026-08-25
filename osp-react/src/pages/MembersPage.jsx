@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import * as XLSX from 'xlsx';
 import {
   Download,
   SlidersHorizontal,
@@ -12,8 +13,9 @@ import {
   UserCheck,
   UserX,
   Snowflake,
+  RefreshCw,
 } from 'lucide-react';
-import { MEMBERS } from '../data/members';
+import { fetchAllCustomers, mapApiCustomer } from '../services/memberService';
 import { useShowToast } from '../contexts/ToastContext';
 import Avatar from '../components/ui/Avatar';
 import Badge from '../components/ui/Badge';
@@ -40,6 +42,10 @@ const emptyFilterDraft = () => ({
 export default function MembersPage() {
   const showToast = useShowToast();
 
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
   const [filterOpen, setFilterOpen] = useState(false);
   const [liteMode, setLiteMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,21 +57,39 @@ export default function MembersPage() {
 
   const [sortConfig, setSortConfig] = useState(null);
 
+  const loadMembers = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await fetchAllCustomers();
+      setMembers((Array.isArray(data) ? data : []).map(mapApiCustomer));
+    } catch (err) {
+      console.error('Gagal fetch customers:', err);
+      setLoadError('Gagal memuat member dari server.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMembers();
+  }, [loadMembers]);
+
   const stats = useMemo(() => {
-    // Angka kartu ringkasan selalu dari data penuh MEMBERS (kayak HTML aslinya)
-    const total = MEMBERS.length;
-    const active = MEMBERS.filter((m) => m.status === 'ACTIVE').length;
-    const problem = MEMBERS.filter(
+    // Angka kartu ringkasan selalu dari data penuh members (kayak HTML aslinya)
+    const total = members.length;
+    const active = members.filter((m) => m.status === 'ACTIVE').length;
+    const problem = members.filter(
       (m) => m.status === 'DEFAULTED' || m.status === 'EXPIRED'
     ).length;
-    const freeze = MEMBERS.filter((m) => m.status === 'FREEZE').length;
+    const freeze = members.filter((m) => m.status === 'FREEZE').length;
     return { total, active, problem, freeze };
-  }, []);
+  }, [members]);
 
   // Gabungin live search + filter panel yang udah di-apply
   const filteredMembers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return MEMBERS.filter((m) => {
+    return members.filter((m) => {
       if (q) {
         const matchSearch =
           m.name.toLowerCase().includes(q) ||
@@ -87,7 +111,7 @@ export default function MembersPage() {
       if (appliedFilter.status && m.status !== appliedFilter.status) return false;
       return true;
     });
-  }, [searchQuery, appliedFilter]);
+  }, [members, searchQuery, appliedFilter]);
 
   const sortedMembers = useMemo(() => {
     // Sort ID / Member kalo user klik ▼ (siklus asc → desc → off)
@@ -149,34 +173,39 @@ export default function MembersPage() {
   };
 
   const handleExport = () => {
-    const headers = liteMode
-      ? ['#', 'ID', 'Member', 'Email', 'KeyFob', 'Register', 'Status']
-      : [
-          '#',
-          'ID',
-          'Member',
-          'Email',
-          'KeyFob',
-          'Register',
-          'Bill Info',
-          'Status',
-        ];
-    const rows = sortedMembers.map((m, i) => {
-      const row = [
-        String(i + 1),
-        m.id,
-        m.name,
-        m.email,
-        m.keyfob,
-        m.register,
+  const headers = liteMode
+    ? ['#', 'ID', 'Member', 'Email', 'KeyFob', 'Register', 'Status']
+    : [
+        '#',
+        'ID',
+        'Member',
+        'Email',
+        'KeyFob',
+        'Register',
+        'Bill Info',
+        'Status',
       ];
-      if (!liteMode) row.push(m.bill);
-      row.push(m.status);
-      return row;
-    });
-    exportTableToCSV(headers, rows, 'members_export.csv');
-    showToast?.('Downloaded members_export.csv', 'success');
-  };
+  const rows = sortedMembers.map((m, i) => {
+    const row = [
+      String(i + 1),
+      m.id,
+      m.name,
+      m.email,
+      m.keyfob,
+      m.register,
+    ];
+    if (!liteMode) row.push(m.bill);
+    row.push(m.status);
+    return row;
+  });
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Members');
+  XLSX.writeFile(workbook, 'members_export.xlsx');
+
+  showToast?.('Downloaded members_export.xlsx', 'success');
+};
 
   const inputClass =
     'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none bg-white';
@@ -234,6 +263,15 @@ export default function MembersPage() {
             >
               Export
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              icon={RefreshCw}
+              onClick={loadMembers}
+              disabled={loading}
+              aria-label="Refresh members"
+            />
             <button
               type="button"
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
@@ -324,7 +362,16 @@ export default function MembersPage() {
         </FilterPanel>
       </div>
 
+      {loadError && (
+        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+          {loadError}
+        </div>
+      )}
+
       {/* Tabel + pagination */}
+      {loading ? (
+        <div className="text-center text-sm text-gray-500 py-12">Memuat member...</div>
+      ) : (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -441,6 +488,7 @@ export default function MembersPage() {
           />
         </div>
       </div>
+      )}
 
       <SlidePanel
         isOpen={!!selectedMember}

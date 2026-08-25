@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { FileX, Loader2, Printer, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { exportTableToCSV } from '../utils/helpers';
+import * as XLSX from 'xlsx';
 import { useShowToast } from '../contexts/ToastContext';
-import api from '../services/api';
+import { fetchOrders } from '../services/orderService';
 
 const PAGE_SIZE = 20;
 
@@ -71,16 +71,14 @@ export default function OspReportPage() {
     setLoading(true);
     setError(null);
     try {
-      const params = {
+      const res = await fetchOrders({
         gymId,
         startDate,
+        endDate: endDate || undefined,
         page: targetPage,
         size: PAGE_SIZE,
         sort: 'createdDate,desc',
-      };
-      if (endDate) params.endDate = endDate;
-
-      const { data: res } = await api.get('/placeorder/details-order', { params });
+      });
 
       const items      = res.content ?? [];
       const pages      = res.totalPages ?? 0;
@@ -126,16 +124,21 @@ export default function OspReportPage() {
 
   // ── Export (current page only) ────────────────────────────────
   function handleExportCSV() {
-    const headers = COLUMNS.map((c) => c.label);
-    const rows = filtered.map((r) =>
-      COLUMNS.map((c) => {
-        const val = c.render(r);
-        return val ?? '-';
-      })
-    );
-    exportTableToCSV(headers, rows, 'osp_report.csv');
-    showToast('CSV exported', 'success');
-  }
+  const headers = COLUMNS.map((c) => c.label);
+  const rows = filtered.map((r) =>
+    COLUMNS.map((c) => {
+      const val = c.render(r);
+      return val ?? '-';
+    })
+  );
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'OSP Report');
+  XLSX.writeFile(workbook, 'osp_report.xlsx');
+
+  showToast('XLSX exported', 'success');
+}
 
   // ── Pagination display helpers ────────────────────────────────
   function getPageNumbers() {
@@ -177,6 +180,9 @@ export default function OspReportPage() {
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </select>
+            {gymList.length === 0 && (
+              <p className="text-xs text-amber-600 mt-1">No gym assigned to your account.</p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Start Date</label>

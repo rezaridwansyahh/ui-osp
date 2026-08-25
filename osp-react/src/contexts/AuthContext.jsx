@@ -5,6 +5,12 @@ import { applyTheme, resetTheme } from '../services/themeService';
 
 const AuthContext = createContext(null);
 
+// Tentuin apakah user punya akses gym yang valid.
+// gymList kosong ATAU brandId null/undefined → dianggap no-gym.
+function hasGymAccess(user) {
+  return !!(user?.gymList?.length > 0 && user?.brandId !== null && user?.brandId !== undefined);
+}
+
 // Ambil user dari localStorage kalau token masih valid
 function getUserFromStorage() {
   const token = getToken();
@@ -14,8 +20,8 @@ function getUserFromStorage() {
   }
   const user = getUser();
   // Apply theme langsung saat app load (kalau sudah login)
-  // brandId null (admin tanpa gym) → reset ke default, jangan biarkan tema lama nyangkut
-  if (user?.brandId) applyTheme(user.brandId);
+  // No gym access → reset ke default, jangan biarkan tema lama nyangkut
+  if (hasGymAccess(user)) applyTheme(user.brandId);
   else resetTheme();
   return user;
 }
@@ -36,8 +42,8 @@ export function AuthProvider({ children }) {
     if (result.success) {
       setUser(result.user);
       // Apply theme sesuai brandId dari user yang login
-      // brandId null → reset eksplisit, jangan biarkan tema sesi sebelumnya nyangkut
-      if (result.user?.brandId) {
+      // No gym access → reset eksplisit, jangan biarkan tema sesi sebelumnya nyangkut
+      if (hasGymAccess(result.user)) {
         applyTheme(result.user.brandId);
       } else {
         resetTheme();
@@ -53,7 +59,15 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isAuthenticated: !!user,
+        hasGymAccess: hasGymAccess(user),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
