@@ -1,1 +1,5 @@
 *.zip
+
+# Catatan lokal Claude Code — jangan di-push
+CLAUDE.md
+**/CLAUDE.md

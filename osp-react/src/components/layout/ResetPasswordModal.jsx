@@ -1,15 +1,24 @@
 import { useState } from 'react';
 import Modal from '../ui/Modal';
 import { useShowToast } from '../../contexts/ToastContext';
+import { resetPassword } from '../../services/authService';
+import { isEndpointMissing } from '../../utils/apiErrors';
 
-const EMPTY_FORM = { oldPassword: '', newPassword: '', confirmPassword: '' };
+const NOT_DEPLOYED_MSG =
+  'Endpoint reset password belum aktif di server ini — menunggu deploy dari tim backend.';
 
-// Belum ada endpoint reset password di backend (masih sistem lama). Validasi
-// di sini murni client-side, submit tidak benar-benar mengganti password.
-export default function ResetPasswordModal({ isOpen, onClose }) {
+const EMPTY_FORM = { newPassword: '', confirmPassword: '' };
+
+// PATCH /user/reset-password — reset ala-admin: set password baru langsung,
+// TIDAK butuh password lama (makanya gak ada field "Old Password"). `userId`
+// yang dikirim ke backend adalah username, bukan id numerik.
+export default function ResetPasswordModal({ isOpen, onClose, user }) {
   const showToast = useShowToast();
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const userId = user?.username ?? user?.id ?? '';
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -19,46 +28,55 @@ export default function ResetPasswordModal({ isOpen, onClose }) {
   const handleClose = () => {
     setForm(EMPTY_FORM);
     setError('');
+    setSaving(false);
     onClose();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (form.newPassword.length < 6) {
+      setError('Password baru minimal 6 karakter.');
+      return;
+    }
     if (form.newPassword !== form.confirmPassword) {
       setError('New Password dan Confirm Password tidak sama.');
       return;
     }
+    if (!userId) {
+      setError('User tidak dikenali — coba login ulang.');
+      return;
+    }
 
-    showToast('Password berhasil direset (lokal saja, belum tersimpan ke server)', 'success');
-    handleClose();
+    setSaving(true);
+    try {
+      await resetPassword(userId, form.newPassword);
+      showToast('Password berhasil diganti.', 'success');
+      handleClose();
+    } catch (err) {
+      setError(
+        isEndpointMissing(err)
+          ? NOT_DEPLOYED_MSG
+          : err.response?.data?.responseMessage || err.message || 'Gagal reset password.'
+      );
+      setSaving(false);
+    }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Reset Password" maxWidth="max-w-md">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          Belum ada endpoint reset password di backend. Submit ini tidak benar-benar mengganti password kamu.
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Old Password *</label>
-          <input
-            type="password"
-            required
-            placeholder="Enter your current password"
-            value={form.oldPassword}
-            onChange={handleChange('oldPassword')}
-            className="w-full border-b border-gray-200 py-1.5 text-sm focus:outline-none focus:border-violet-500"
-          />
-        </div>
+        <p className="text-sm text-gray-500">
+          Password baru akan langsung dipakai. Kamu tidak perlu memasukkan
+          password lama.
+        </p>
 
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">New Password *</label>
           <input
             type="password"
             required
-            placeholder="Enter your new password"
+            placeholder="Minimal 6 karakter"
             value={form.newPassword}
             onChange={handleChange('newPassword')}
             className="w-full border-b border-gray-200 py-1.5 text-sm focus:outline-none focus:border-violet-500"
@@ -70,7 +88,7 @@ export default function ResetPasswordModal({ isOpen, onClose }) {
           <input
             type="password"
             required
-            placeholder="Re-enter your new password"
+            placeholder="Ulangi password baru"
             value={form.confirmPassword}
             onChange={handleChange('confirmPassword')}
             className="w-full border-b border-gray-200 py-1.5 text-sm focus:outline-none focus:border-violet-500"
@@ -85,9 +103,10 @@ export default function ResetPasswordModal({ isOpen, onClose }) {
 
         <button
           type="submit"
-          className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+          disabled={saving}
+          className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Submit
+          {saving ? 'Menyimpan...' : 'Submit'}
         </button>
       </form>
     </Modal>

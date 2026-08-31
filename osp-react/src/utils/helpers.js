@@ -41,3 +41,14 @@ export function formatBytes(bytes) {
 export function formatCurrency(amount) {
   return 'Rp ' + (Number(amount) || 0).toLocaleString('id-ID');
 }
+
+// Rupiah tapi '-' kalau nilainya null/undefined (bukan 0). Dipakai di tabel
+// report & pending membership, biar sel kosong gak kebaca "beneran Rp 0".
+export function formatIDR(n) {
+  return n == null ? '-' : formatCurrency(n);
+}
+
+// Tanggal hari ini dalam format yyyy-MM-dd (buat default filter date).
+export function today() {
+  return new Date().toISOString().slice(0, 10);
+}

@@ -1,40 +1,46 @@
 import api from './api';
 import { saveToken, saveUser } from '../utils/jwt';
 import { fetchGyms } from './gymService';
-import { fetchFranchiseByGymId } from './franchiseService';
+import { fetchFranchiseByGymId, fetchFranchiseGyms } from './franchiseService';
 
-async function resolveBrandIdFromGym(user) {
+/**
+ * Resolve brandId + franchiseId dari gym user dalam SATU call ke
+ * `GET /api/franchise/gyms` (list gym + brand + franchise).
+ *
+ * franchiseId dipakai sebagai `areaId` di endpoint /items. brandId dipakai buat
+ * tema & routing RBAC.
+ *
+ * Kalau list itu gagal, fallback ke cara lama: brandId dari `/master/gyms`,
+ * franchiseId dari `/api/franchise/mappings/gym/{gymId}`.
+ */
+async function resolveGymContext(user) {
   const gymId = user.gymId ?? user.gym?.id ?? null;
+  const seed = { brandId: user.brandId ?? null, franchiseId: null };
 
-  if (user.brandId) return user.brandId;
-  if (!gymId) return null;
+  // -1 = SystemOperator/multi-gym — gak ada satu gym/brand/franchise spesifik
+  if (!gymId || gymId === -1) return seed;
 
   try {
-    const gyms = await fetchGyms();
-    const gym = gyms.find((g) => g.id === gymId);
-    return gym?.brandId ?? null;
+    const gyms = await fetchFranchiseGyms();
+    const gym = Array.isArray(gyms) ? gyms.find((g) => g.id === gymId) : null;
+    if (gym) {
+      return {
+        brandId: seed.brandId ?? gym.brandId ?? null,
+        franchiseId: gym.franchiseId ?? null,
+      };
+    }
+    return seed;
   } catch (err) {
-    console.error('Gagal fetch gyms saat resolve brandId:', err);
-    return null;
-  }
-}
-
-// UPDATE: endpoint single-gym-lookup (/api/franchise/mappings/gym/:gymId) lagi
-// bug, konsisten 500 walau data mapping-nya valid (cross-checked via
-// /api/franchise/mappings all-mappings). Response-nya juga cuma punya
-// franchiseId, gak pernah ada field areaId terpisah — franchiseId ITU
-// area context yang dipake /items endpoints. Reported ke mentor (pending fix).
-async function resolveFranchiseIdFromGym(user) {
-  const gymId = user.gymId ?? user.gym?.id ?? null;
-
-  if (!gymId || gymId === -1) return null; // -1 = SystemOperator/multi-gym, gak applicable
-
-  try {
-    const franchise = await fetchFranchiseByGymId(gymId);
-    return franchise?.franchiseId ?? null;
-  } catch (err) {
-    console.error('Gagal fetch franchise saat resolve franchiseId:', err);
-    return null; // fallback aman, bukan crash — known backend bug, lihat comment di atas
+    console.error('resolveGymContext: /api/franchise/gyms gagal, pakai fallback lama:', err);
+    const [brandId, franchiseId] = await Promise.all([
+      fetchGyms()
+        .then((gs) => gs.find((g) => g.id === gymId)?.brandId ?? null)
+        .catch(() => null),
+      fetchFranchiseByGymId(gymId)
+        .then((f) => f?.franchiseId ?? null)
+        .catch(() => null),
+    ]);
+    return { brandId: seed.brandId ?? brandId, franchiseId };
   }
 }
 
@@ -42,10 +48,7 @@ export async function loginAPI(username, password) {
   try {
     const { data } = await api.post('/api/v2/login', { username, password });
 
-    const [brandId, franchiseId] = await Promise.all([
-      resolveBrandIdFromGym(data.user),
-      resolveFranchiseIdFromGym(data.user),
-    ]);
+    const { brandId, franchiseId } = await resolveGymContext(data.user);
 
     const resolvedUser = {
       ...data.user,
@@ -70,4 +73,22 @@ export async function loginAPI(username, password) {
 
     return { success: false, error: message };
   }
+}
+
+/**
+ * Reset password ala-admin lewat PATCH /user/reset-password: langsung set
+ * password baru di tabel users, TIDAK butuh password lama.
+ *
+ * body: { userId, newPassword } — `userId` di sini adalah USERNAME (string),
+ * bukan id numerik.
+ *
+ * Sukses -> { responseCode: '_000', responseMessage: 'SUCCESS' }
+ * Gagal  -> _004 (password < 6 karakter), _003 (user not found)
+ */
+export async function resetPassword(userId, newPassword) {
+  const { data } = await api.patch('/user/reset-password', { userId, newPassword });
+  if (data?.responseCode && data.responseCode !== '_000') {
+    throw new Error(data.responseMessage || 'Gagal reset password.');
+  }
+  return data;
 }

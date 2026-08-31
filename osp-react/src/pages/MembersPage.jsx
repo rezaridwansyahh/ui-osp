@@ -14,8 +14,17 @@ import {
   UserX,
   Snowflake,
   RefreshCw,
+  Pencil,
+  Phone,
+  Save,
 } from 'lucide-react';
-import { fetchAllCustomersCached, mapApiCustomer } from '../services/memberService';
+import {
+  fetchAllCustomersCached,
+  mapApiCustomer,
+  updateMember,
+  clearCustomersCache,
+  MEMBER_STATUS_TO_CODE,
+} from '../services/memberService';
 import { useShowToast } from '../contexts/ToastContext';
 import Avatar from '../components/ui/Avatar';
 import Badge from '../components/ui/Badge';
@@ -27,6 +36,7 @@ import SlidePanel from '../components/ui/SlidePanel';
 import FilterPanel, { FilterField } from '../components/ui/FilterPanel';
 import { STATUS_DOT_COLORS } from '../utils/constants';
 import { getAvatarColor, getInitials } from '../utils/helpers';
+import { isEndpointMissing } from '../utils/apiErrors';
 
 const PAGE_SIZE = 8;
 
@@ -51,6 +61,11 @@ export default function MembersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedMember, setSelectedMember] = useState(null);
+
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState(null);
 
   const [filterDraft, setFilterDraft] = useState(emptyFilterDraft);
   const [appliedFilter, setAppliedFilter] = useState(emptyFilterDraft);
@@ -173,6 +188,88 @@ export default function MembersPage() {
     const empty = emptyFilterDraft();
     setFilterDraft(empty);
     setAppliedFilter(empty);
+  };
+
+  // '-' dari mapApiCustomer artinya "gak ada nilai" — di form edit tampilin kosong.
+  const unDash = (v) => (v == null || v === '-' ? '' : String(v));
+
+  const startEdit = () => {
+    if (!selectedMember) return;
+    setEditForm({
+      email: unDash(selectedMember.email),
+      keyfob: unDash(selectedMember.keyfob),
+      phone: unDash(selectedMember.phone),
+      status: selectedMember.status ?? '',
+    });
+    setEditError(null);
+    setEditMode(true);
+  };
+
+  const cancelEdit = () => {
+    setEditMode(false);
+    setEditForm(null);
+    setEditError(null);
+  };
+
+  const closeMemberPanel = () => {
+    setSelectedMember(null);
+    cancelEdit();
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!selectedMember || !editForm) return;
+
+    // Kirim HANYA field yang berubah — PUT /customers/{id} cuma update field
+    // yang ada di body, sisanya dibiarkan apa adanya di server.
+    const patch = {};
+    if (editForm.email.trim() !== unDash(selectedMember.email)) {
+      patch.email = editForm.email.trim();
+    }
+    if (editForm.keyfob.trim() !== unDash(selectedMember.keyfob)) {
+      patch.keyfob = editForm.keyfob.trim();
+    }
+    if (editForm.phone.trim() !== unDash(selectedMember.phone)) {
+      patch.phoneNumber = editForm.phone.trim();
+    }
+    if (editForm.status && editForm.status !== (selectedMember.status ?? '')) {
+      const code = MEMBER_STATUS_TO_CODE[editForm.status];
+      if (code != null) patch.status = code;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      cancelEdit();
+      return;
+    }
+
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      await updateMember(selectedMember.id, patch);
+
+      // Update lokal biar gak perlu re-fetch /customers (bisa >140s).
+      const patched = {
+        ...selectedMember,
+        email: 'email' in patch ? patch.email || '-' : selectedMember.email,
+        keyfob: 'keyfob' in patch ? patch.keyfob || '-' : selectedMember.keyfob,
+        phone: 'phoneNumber' in patch ? patch.phoneNumber || '-' : selectedMember.phone,
+        status: 'status' in patch ? editForm.status : selectedMember.status,
+      };
+      setMembers((prev) => prev.map((m) => (m.id === patched.id ? patched : m)));
+      setSelectedMember(patched);
+      clearCustomersCache(); // cache jangan nyajiin data lama pas balik ke halaman
+      showToast('Perubahan member tersimpan.', 'success');
+      cancelEdit();
+    } catch (err) {
+      console.error('Gagal update member:', err);
+      setEditError(
+        isEndpointMissing(err)
+          ? 'Endpoint edit member (PUT /customers/{id}) belum aktif di server ini — menunggu deploy dari tim backend.'
+          : err.response?.data?.responseMessage || err.message || 'Gagal menyimpan perubahan.'
+      );
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const handleExport = () => {
@@ -495,11 +592,111 @@ export default function MembersPage() {
 
       <SlidePanel
         isOpen={!!selectedMember}
-        onClose={() => setSelectedMember(null)}
-        title="Member Detail"
+        onClose={closeMemberPanel}
+        title={editMode ? 'Edit Member' : 'Member Detail'}
       >
-        {selectedMember && (
+        {selectedMember && editMode && editForm && (
+          <form onSubmit={handleSaveEdit} className="space-y-4">
+            <p className="text-xs text-gray-400">
+              Nama, paket, dan tanggal membership tidak bisa diubah dari sini —
+              <code className="mx-1">GET /customers</code> hanya mengembalikan nama
+              gabungan, bukan first/last name terpisah.
+            </p>
+
+            <div>
+              <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                Name
+              </label>
+              <p className="text-sm font-bold text-gray-900">{selectedMember.name}</p>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                className={inputClass}
+                placeholder="—"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                KeyFob
+              </label>
+              <input
+                type="text"
+                value={editForm.keyfob}
+                onChange={(e) => setEditForm((f) => ({ ...f, keyfob: e.target.value }))}
+                className={inputClass}
+                placeholder="—"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={editForm.phone}
+                onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                className={inputClass}
+                placeholder="—"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                Membership Status
+              </label>
+              <select
+                value={editForm.status}
+                onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+                className={inputClass}
+              >
+                <option value="">— pilih —</option>
+                {Object.keys(MEMBER_STATUS_TO_CODE).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {editError && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {editError}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-1">
+              <Button type="submit" variant="primary" size="md" icon={Save} disabled={savingEdit}>
+                {savingEdit ? 'Menyimpan...' : 'Save'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={cancelEdit}
+                disabled={savingEdit}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {selectedMember && !editMode && (
           <>
+            <div className="mb-4 flex justify-end">
+              <Button type="button" variant="outline" size="sm" icon={Pencil} onClick={startEdit}>
+                Edit
+              </Button>
+            </div>
             <div className="text-center mb-6">
               <div
                 className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${getAvatarColor(
@@ -545,6 +742,19 @@ export default function MembersPage() {
                   </p>
                   <p className="text-sm font-bold text-gray-900">
                     {selectedMember.email}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <div className="w-9 h-9 bg-white rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-4 h-4 text-violet-500" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">
+                    Phone
+                  </p>
+                  <p className="text-sm font-bold text-gray-900">
+                    {selectedMember.phone}
                   </p>
                 </div>
               </div>

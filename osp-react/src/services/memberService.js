@@ -57,6 +57,46 @@ export async function searchCustomers(search, brandId) {
   return data;
 }
 
+/**
+ * Kode angka memberships.status dari backend (PUT /customers/{id}):
+ * 0 = ACTIVE, 1 = DEFAULTED, 2 = EXPIRED/CANCELED, 3 = FREEZE.
+ * GET /customers mengembalikan status sebagai STRING ('ACTIVE', dst) — konversi
+ * ke angka cuma dibutuhkan saat kirim PUT.
+ */
+export const MEMBER_STATUS_TO_CODE = {
+  ACTIVE: 0,
+  DEFAULTED: 1,
+  EXPIRED: 2,
+  FREEZE: 3,
+};
+
+/**
+ * Edit member (personaldetails + memberships sekaligus) via PUT /customers/{id}.
+ * Backend HANYA meng-update field yang ada (non-null) di body — kirim cuma yang
+ * berubah. Kalau member gak punya baris memberships, field membership di-skip
+ * diam-diam dan cuma personaldetails yang keupdate.
+ *
+ * Sukses  -> { ...fields, responseCode: '_000', responseMessage: 'SUCCESS' }
+ * Gagal   -> { responseCode: '_003', responseMessage: 'NOT FOUND' }
+ *
+ * Field body yang didukung (semua opsional): firstName, lastName, email, keyfob,
+ * mobileNumber, phoneNumber, address, gender, birthdate, packageId, packageDesc,
+ * paymentType, membershipMinLength, paymentValue, status (angka, lihat
+ * MEMBER_STATUS_TO_CODE), signupDate, startDate, expiryDate.
+ */
+export async function updateMember(id, patch) {
+  const { data } = await api.put(`/customers/${id}`, patch);
+  if (data?.responseCode && data.responseCode !== '_000') {
+    throw new Error(data.responseMessage || 'Gagal menyimpan perubahan member.');
+  }
+  return data;
+}
+
+/** Buang cache in-memory /customers (dipanggil setelah edit member berhasil). */
+export function clearCustomersCache() {
+  customersCache = null;
+}
+
 /** Pending membership list per gym — BUTUH gymId. Dipakai PendingMembershipPage. */
 export async function fetchPendingMembershipByGym(gymId) {
   const { data } = await api.get('/customers/search/pending-membership-gym/', {
@@ -73,6 +113,7 @@ export function mapApiCustomer(c) {
     name: c.name || '(Tanpa nama)',
     email: c.email || '-',
     keyfob: c.keyFob || '-',
+    phone: c.phoneNumber || '-',
     register: c.createdDate ? c.createdDate.slice(0, 10) : '-',
     bill: billAmount > 0 ? formatCurrency(billAmount) : '-',
     billAmount,

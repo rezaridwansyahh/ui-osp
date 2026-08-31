@@ -123,6 +123,7 @@ export default function Navbar({ onToggleSidebar, sidebarCollapsed, onToggleSide
       <ResetPasswordModal
         isOpen={showResetPassword}
         onClose={() => setShowResetPassword(false)}
+        user={user}
       />
     </header>
   );

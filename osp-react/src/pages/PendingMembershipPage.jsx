@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import * as XLSX from 'xlsx';
 import { useShowToast } from '../contexts/ToastContext';
 import { fetchPendingMembershipByGym } from '../services/memberService';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency, formatIDR } from '../utils/helpers';
 
 const PAGE_SIZE = 10;
 
@@ -12,10 +12,6 @@ const formatDate = (d) => {
   if (!d) return '-';
   return String(d).replace('T', ' ').slice(0, 19);
 };
-
-// '-' buat nilai yang emang gak ada (bukan 0) — beda dari formatCurrency()
-// yang selalu nampilin angka, biar gak salah dibaca sebagai "beneran Rp 0".
-const formatIDR = (n) => (n == null ? '-' : formatCurrency(n));
 
 export default function PendingMembershipPage() {
   const showToast = useShowToast();
