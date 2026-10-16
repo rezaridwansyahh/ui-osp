@@ -97,6 +97,84 @@ export function clearCustomersCache() {
   customersCache = null;
 }
 
+/**
+ * Search member per gym, server-side paginated — GET /api/member-view-light.
+ * Beda sama fetchAllCustomers(): wajib gymId, dan pagination/filter beneran
+ * dilakukan di server (bukan fetch-semua-lalu-slice di client).
+ *
+ * @param {Object} params
+ * @param {number} params.gymId — wajib
+ * @param {number} [params.id] — exact match
+ * @param {string} [params.name] — partial match
+ * @param {string} [params.email] — partial match
+ * @param {string} [params.membershipType] — exact match
+ * @param {string} [params.membershipStatus] — exact match: ACTIVE | DEFAULTED | EXPIRED/CANCELED | FREEZE
+ * @param {number} [params.page] — 0-indexed
+ * @param {number} [params.size]
+ * @param {string} [params.sort] — '<field>,asc|desc'
+ */
+export async function fetchMemberViewLight(params) {
+  const { data } = await api.get('/api/member-view-light', { params });
+  return data;
+}
+
+// Label label status dari membershipStatusLabel pakai '/' ("EXPIRED/CANCELED"),
+// tapi Badge/STATUS_STYLES cuma kenal 'EXPIRED' — normalisasi buat display.
+// Dipakai juga sebagai daftar pilihan filter status (value asli, dikirim apa
+// adanya ke server).
+export const MEMBER_VIEW_LIGHT_STATUS_OPTIONS = ['ACTIVE', 'DEFAULTED', 'EXPIRED/CANCELED', 'FREEZE'];
+
+function normalizeStatusLabel(label) {
+  if (!label) return null;
+  return label === 'EXPIRED/CANCELED' ? 'EXPIRED' : label;
+}
+
+/** Map 1 baris GET /api/member-view-light -> shape yang dipakai UI Members (gym-scoped). */
+export function mapMemberViewLight(m) {
+  return {
+    id: m.id != null ? String(m.id) : '-',
+    membershipId: m.membershipId ?? null,
+    name: m.memberName || '(Tanpa nama)',
+    email: m.emailAddress || '-',
+    keyfob: m.keyfob || '-',
+    phone: m.phoneNumber || m.mobileNumber || '-',
+    register: m.createdDate ? m.createdDate.slice(0, 10) : m.signupDate || '-',
+    // status mentah (buat kirim balik ke server/filter) + label buat Badge
+    statusRaw: m.membershipStatusLabel || null,
+    status: normalizeStatusLabel(m.membershipStatusLabel),
+    membershipType: m.membershipType || null,
+    gymId: m.gymId ?? null,
+    gymName: m.gymName || '-',
+    paymentValue: m.paymentValue ?? null,
+    bill: m.paymentValue ? formatCurrency(m.paymentValue) : '-',
+    expiryDate: m.expiryDate || '-',
+    nextBillingDate: m.nextBillingDate || '-',
+    freezeUntil: m.freezeUntil || null,
+  };
+}
+
+/**
+ * Hitung breakdown status member 1 gym pakai 5 request ringan (size: 1,
+ * cuma baca totalElements) ke /api/member-view-light — dibanding fetch semua
+ * member buat dihitung di client (gak mungkin lagi karena server-side
+ * pagination), ini tetep ngasih angka real per status tanpa narik seluruh
+ * dataset gym itu.
+ */
+export async function fetchMemberCounts(gymId) {
+  const countFor = (membershipStatus) =>
+    fetchMemberViewLight({ gymId, membershipStatus, page: 0, size: 1 }).then(
+      (r) => r.totalElements ?? 0
+    );
+  const [total, active, defaulted, expired, freeze] = await Promise.all([
+    fetchMemberViewLight({ gymId, page: 0, size: 1 }).then((r) => r.totalElements ?? 0),
+    countFor('ACTIVE'),
+    countFor('DEFAULTED'),
+    countFor('EXPIRED/CANCELED'),
+    countFor('FREEZE'),
+  ]);
+  return { total, active, problem: defaulted + expired, freeze };
+}
+
 /** Pending membership list per gym — BUTUH gymId. Dipakai PendingMembershipPage. */
 export async function fetchPendingMembershipByGym(gymId) {
   const { data } = await api.get('/customers/search/pending-membership-gym/', {

@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Store, Package, BarChart3, ChevronDown, User, FileText, Palette } from 'lucide-react';
-import { SIDEBAR_NAV } from '../../utils/constants';
+import { ChevronDown, User, Palette } from 'lucide-react';
+import { SIDEBAR_NAV, NAV_ICON_MAP } from '../../utils/constants';
 import { useAuth } from '../../hooks/useAuth';
 import { getTheme } from '../../services/themeService';
-
-const ICON_MAP = { Home, Store, Package, BarChart3, FileText };
 
 export default function Sidebar({ isOpen, onClose, collapsed = false }) {
   const location = useLocation();
@@ -80,7 +78,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
         {/* Navigation */}
         <nav className={`flex-1 overflow-y-auto py-3 space-y-1 sidebar-scrollbar ${collapsed ? 'px-2' : 'px-3'}`}>
           {SIDEBAR_NAV.map((item) => {
-            const Icon = ICON_MAP[item.icon];
+            const Icon = NAV_ICON_MAP[item.icon];
 
             // Simple link tanpa children
             if (!item.children) {

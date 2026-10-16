@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Chart from 'react-apexcharts';
 import {
   LayoutDashboard,
@@ -7,9 +8,11 @@ import {
   UserX,
   Snowflake,
   Info,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { fetchAllCustomersCached, mapApiCustomer } from '../services/memberService';
+import { SIDEBAR_NAV, NAV_ICON_MAP } from '../utils/constants';
 
 // Sama kayak home-charts.js — font buat semua chart
 const fontFamily = 'IBM Plex Sans, sans-serif';
@@ -256,6 +259,49 @@ function WelcomeBanner({ user, hasGymAccess }) {
           <InfoBubble label="Gym Access" value={gymName} warn={!hasGymAccess} />
           <InfoBubble label="Login Time" value={loginTime} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Flatten SIDEBAR_NAV jadi daftar halaman leaf doang (skip Home sendiri) —
+// tile-nya mewarisi icon dari grup induknya. Dihitung sekali di module level
+// karena SIDEBAR_NAV statis, gak perlu useMemo per-render.
+const QUICK_ACCESS_PAGES = SIDEBAR_NAV.flatMap((item) =>
+  item.children
+    ? item.children.map((child) => ({ ...child, icon: item.icon, group: item.label }))
+    : item.path !== '/'
+      ? [item]
+      : []
+);
+
+// Poin ke-2 dari catatan mentor: icon tile di Home yang kalau dipencet
+// langsung buka page-nya — entry point alternatif selain sidebar/top nav.
+function QuickAccessSection() {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-5">
+      <h3 className="text-sm font-semibold text-gray-800 mb-1">Quick Access</h3>
+      <p className="text-xs text-gray-400 mb-4">Pintasan ke semua halaman, tanpa buka menu</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        {QUICK_ACCESS_PAGES.map((page) => {
+          const Icon = NAV_ICON_MAP[page.icon];
+          return (
+            <Link
+              key={page.path}
+              to={page.path}
+              className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-violet-200 hover:bg-violet-50/40 transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0 group-hover:bg-violet-100">
+                <Icon className="w-5 h-5 text-violet-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-gray-800 truncate">{page.label}</p>
+                <p className="text-[10px] text-gray-400 truncate">{page.group}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-violet-400 flex-shrink-0" />
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
@@ -516,6 +562,8 @@ export default function HomePage() {
   return (
     <div className="p-4 lg:p-6">
       <WelcomeBanner user={user} hasGymAccess={hasGymAccess} />
+
+      <QuickAccessSection />
 
       {loadError && (
         <div className="mb-5 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center justify-between gap-3">

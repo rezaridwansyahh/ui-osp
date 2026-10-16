@@ -1,3 +1,34 @@
+import {
+  Home,
+  Store,
+  Package,
+  BarChart3,
+  FileText,
+  IdCard,
+  Users,
+  Wallet,
+  Receipt,
+  FileBarChart,
+  UserPlus,
+} from 'lucide-react';
+
+// Satu sumber mapping icon buat SIDEBAR_NAV — dipakai Sidebar.jsx, TopNav.jsx,
+// BottomDock.jsx, dan tile launcher di HomePage, biar gak didefinisiin ulang
+// di tiap tempat.
+export const NAV_ICON_MAP = {
+  Home,
+  Store,
+  Package,
+  BarChart3,
+  FileText,
+  IdCard,
+  Users,
+  Wallet,
+  Receipt,
+  FileBarChart,
+  UserPlus,
+};
+
 export const STATUS_STYLES = {
   ACTIVE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   EXPIRED: 'bg-orange-50 text-orange-700 ring-orange-600/20',
@@ -6,6 +37,10 @@ export const STATUS_STYLES = {
   SUCCESS: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
   PENDING: 'bg-amber-50 text-amber-600 ring-amber-100',
   VOID: 'bg-red-50 text-red-500 ring-red-100',
+  // Casing asli dari GET /api/report-recurring (recurringStatus) — beda dari
+  // SUCCESS di atas yang dipakai status transaksi POS.
+  Success: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
+  Failed: 'bg-red-50 text-red-500 ring-red-100',
 };
 
 export const STATUS_DOT_COLORS = {
@@ -25,25 +60,25 @@ export const SIDEBAR_NAV = [
     label: 'Manage Merchant',
     icon: 'Store',
     children: [
-      { label: 'Card Verify Submission', path: '/card-verify' },
-      { label: 'Members', path: '/members' },
-      { label: 'Monthly Payment', path: '/monthly-payment' },
+      { label: 'Card Verify Submission', path: '/card-verify', icon: 'IdCard' },
+      { label: 'Members', path: '/members', icon: 'Users' },
+      { label: 'Monthly Payment', path: '/monthly-payment', icon: 'Wallet' },
     ],
   },
   {
     label: 'Package & Product',
     icon: 'Package',
     children: [
-      { label: 'Product', path: '/product' },
+      { label: 'Product', path: '/product', icon: 'Package' },
     ],
   },
   {
     label: 'Point of Sales',
     icon: 'BarChart3',
     children: [
-      { label: 'Daily Sales Report', path: '/daily-transaction' },
-      { label: 'OSP Report', path: '/osp-report' },
-      { label: 'Pending Membership', path: '/pending-membership' },
+      { label: 'Daily Sales Report', path: '/daily-transaction', icon: 'Receipt' },
+      { label: 'OSP Report', path: '/osp-report', icon: 'FileBarChart' },
+      { label: 'Pending Membership', path: '/pending-membership', icon: 'UserPlus' },
     ],
   },
 ];

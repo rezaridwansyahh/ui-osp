@@ -1,12 +1,35 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Power, Maximize, User, KeyRound, ChevronRight, MapPin } from 'lucide-react';
+import {
+  Menu,
+  Power,
+  Maximize,
+  User,
+  KeyRound,
+  ChevronRight,
+  MapPin,
+  PanelLeft,
+  PanelTop,
+  PanelBottom,
+} from 'lucide-react';
 import { BREADCRUMBS } from '../../utils/constants';
 import { useAuth } from '../../hooks/useAuth';
 import EditProfileModal from './EditProfileModal';
 import ResetPasswordModal from './ResetPasswordModal';
 
-export default function Navbar({ onToggleSidebar, sidebarCollapsed, onToggleSidebarCollapsed }) {
+const LAYOUT_MODES = [
+  { value: 'sidebar', icon: PanelLeft, title: 'Layout: Sidebar' },
+  { value: 'topnav', icon: PanelTop, title: 'Layout: Nav di atas' },
+  { value: 'bottomnav', icon: PanelBottom, title: 'Layout: Dock di bawah' },
+];
+
+export default function Navbar({
+  onToggleSidebar,
+  sidebarCollapsed,
+  onToggleSidebarCollapsed,
+  layoutMode = 'sidebar',
+  onChangeLayoutMode,
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -24,14 +47,16 @@ export default function Navbar({ onToggleSidebar, sidebarCollapsed, onToggleSide
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shrink-0 shadow-sm">
-      {/* Kiri: toggle sidebar + breadcrumb */}
+      {/* Kiri: toggle sidebar (mode sidebar doang, gak ada aside buat dibuka di mode topnav) + breadcrumb */}
       <div className="flex items-center gap-3">
-        <button
-          onClick={onToggleSidebar}
-          className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <Menu className="w-5 h-5 text-gray-600" />
-        </button>
+        {layoutMode === 'sidebar' && (
+          <button
+            onClick={onToggleSidebar}
+            className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <Menu className="w-5 h-5 text-gray-600" />
+          </button>
+        )}
 
         <div className="flex items-center text-sm gap-1.5">
           {crumbs.map((crumb, idx) => {
@@ -82,22 +107,43 @@ export default function Navbar({ onToggleSidebar, sidebarCollapsed, onToggleSide
           >
             <Power className="w-5 h-5 text-red-400 group-hover:text-red-600" />
           </button>
-          <button
-            onClick={onToggleSidebarCollapsed}
-            aria-pressed={sidebarCollapsed}
-            className={`p-2 rounded-lg border transition-colors group ${
-              sidebarCollapsed
-                ? 'border-violet-300 bg-violet-50'
-                : 'border-transparent hover:bg-gray-100'
-            }`}
-            title={sidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'}
-          >
-            <Maximize
-              className={`w-5 h-5 ${
-                sidebarCollapsed ? 'text-violet-600' : 'text-gray-400 group-hover:text-gray-600'
+          {layoutMode === 'sidebar' && (
+            <button
+              onClick={onToggleSidebarCollapsed}
+              aria-pressed={sidebarCollapsed}
+              className={`p-2 rounded-lg border transition-colors group ${
+                sidebarCollapsed
+                  ? 'border-violet-300 bg-violet-50'
+                  : 'border-transparent hover:bg-gray-100'
               }`}
-            />
-          </button>
+              title={sidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'}
+            >
+              <Maximize
+                className={`w-5 h-5 ${
+                  sidebarCollapsed ? 'text-violet-600' : 'text-gray-400 group-hover:text-gray-600'
+                }`}
+              />
+            </button>
+          )}
+          {onChangeLayoutMode && (
+            <div className="flex items-center gap-0.5 p-0.5 bg-gray-100 rounded-lg">
+              {LAYOUT_MODES.map(({ value, icon: Icon, title }) => (
+                <button
+                  key={value}
+                  onClick={() => onChangeLayoutMode(value)}
+                  aria-pressed={layoutMode === value}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    layoutMode === value
+                      ? 'bg-white shadow-sm text-violet-600'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                  title={title}
+                >
+                  <Icon className="w-4 h-4" />
+                </button>
+              ))}
+            </div>
+          )}
           <button
             onClick={() => setShowEditProfile(true)}
             className="p-2 rounded-lg hover:bg-violet-50 transition-colors group"
